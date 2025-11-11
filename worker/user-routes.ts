@@ -3,12 +3,11 @@ import type { Env } from './core-utils';
 import { KeyEntity, PersonnelEntity, KeyAssignmentEntity, NotificationEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
 import { Key, Personnel, KeyAssignment, ReportSummary, KeyStatus, OverdueKeyInfo, Notification } from "@shared/types";
-import { isAfter } from 'date-fns';
 async function checkAndUpdateOverdueKeys(env: Env) {
   const assignments = await KeyAssignmentEntity.list(env);
   const activeAssignments = assignments.items.filter(a => !a.returnDate);
   for (const assignment of activeAssignments) {
-    if (isAfter(new Date(), new Date(assignment.dueDate))) {
+    if (new Date() > new Date(assignment.dueDate)) {
       const key = new KeyEntity(env, assignment.keyId);
       if (await key.exists()) {
         const keyState = await key.getState();
