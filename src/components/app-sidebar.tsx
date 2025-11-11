@@ -60,7 +60,7 @@ export function AppSidebar(): JSX.Element {
               tooltip={isCollapsed ? "Expand" : "Collapse"}
             >
               {isCollapsed ? <PanelRight className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
-              <span>{isCollapsed ? "Expand" : "Collapse"}</span>
+              <span className="group-data-[state=collapsed]:hidden">{isCollapsed ? "Expand" : "Collapse"}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
