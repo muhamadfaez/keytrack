@@ -11,8 +11,9 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Key, PopulatedAssignment } from "@shared/types";
 import { useApi } from '@/hooks/useApi';
-import { format, formatDistanceToNow } from 'date-fns';
-import { User, Clock, Calendar, Hash, KeyRound, MapPin } from 'lucide-react';
+import { format } from 'date-fns';
+import { User, Clock, Calendar, Hash, KeyRound, MapPin, History } from 'lucide-react';
+import { EmptyState } from '../layout/EmptyState';
 type KeyDetailsSheetProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -45,12 +46,19 @@ export function KeyDetailsSheet({ isOpen, onOpenChange, keyData }: KeyDetailsShe
       return <p className="text-destructive text-center">Error loading history: {error.message}</p>;
     }
     if (!history || history.length === 0) {
-      return <p className="text-muted-foreground text-center py-4">No assignment history for this key.</p>;
+      return (
+        <EmptyState
+          icon={<History className="h-12 w-12" />}
+          title="No Assignment History"
+          description="This key has not been issued to anyone yet."
+          className="py-4"
+        />
+      );
     }
     return (
       <div className="relative pl-6">
         <div className="absolute left-0 top-0 h-full w-px bg-border" />
-        {history.map((item, index) => (
+        {history.map((item) => (
           <div key={item.id} className="relative mb-6">
             <div className="absolute -left-[30.5px] top-1.5 h-5 w-5 rounded-full bg-primary" />
             <p className="font-semibold">{item.personnel.name}</p>

@@ -11,7 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Personnel, PopulatedAssignment } from "@shared/types";
 import { useApi } from '@/hooks/useApi';
 import { format } from 'date-fns';
-import { KeyRound, Calendar, CheckCircle, AlertTriangle } from 'lucide-react';
+import { KeyRound, Calendar, CheckCircle, AlertTriangle, History } from 'lucide-react';
+import { EmptyState } from '../layout/EmptyState';
 type PersonnelKeyHistorySheetProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -36,7 +37,13 @@ export function PersonnelKeyHistorySheet({ isOpen, onOpenChange, personnelData }
       return <p className="text-destructive text-center">Error loading key history: {error.message}</p>;
     }
     if (!assignments || assignments.length === 0) {
-      return <p className="text-muted-foreground text-center py-8">This person has no assigned keys.</p>;
+      return (
+        <EmptyState
+          icon={<History className="h-12 w-12" />}
+          title="No Key History"
+          description="This person has no current or past key assignments."
+        />
+      );
     }
     const sortedAssignments = [...assignments].sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime());
     return (

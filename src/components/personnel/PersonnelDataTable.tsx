@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Users } from "lucide-react";
 import { Personnel } from "@shared/types";
 import { Skeleton } from '@/components/ui/skeleton';
 import { EditPersonnelDialog } from './EditPersonnelDialog';
@@ -24,6 +24,7 @@ import { PersonnelKeyHistorySheet } from './PersonnelKeyHistorySheet';
 import { useApiMutation } from '@/hooks/useApi';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
+import { EmptyState } from '../layout/EmptyState';
 type PersonnelDataTableProps = {
   data: Personnel[];
   isLoading: boolean;
@@ -64,7 +65,13 @@ export function PersonnelDataTable({ data, isLoading, error }: PersonnelDataTabl
     return <div className="text-center text-destructive">Error: {error.message}</div>;
   }
   if (!data || data.length === 0) {
-    return <div className="text-center text-muted-foreground">No personnel found.</div>;
+    return (
+      <EmptyState
+        icon={<Users className="h-12 w-12" />}
+        title="No Personnel Found"
+        description="Add new personnel to see them listed here."
+      />
+    );
   }
   return (
     <>

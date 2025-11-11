@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge, BadgeProps } from "@/components/ui/badge";
-import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Inbox } from "lucide-react";
 import { Key, KeyStatus } from "@shared/types";
 import { IssueKeyDialog } from './IssueKeyDialog';
 import { EditKeyDialog } from './EditKeyDialog';
@@ -28,6 +28,7 @@ import { useApi, useApiMutation } from '@/hooks/useApi';
 import { api } from '@/lib/api-client';
 import { Skeleton } from '../ui/skeleton';
 import { toast } from 'sonner';
+import { EmptyState } from '../layout/EmptyState';
 type SortableKey = keyof Key;
 type SortDirection = 'ascending' | 'descending';
 const StatusBadge = ({ status }: { status: KeyStatus }) => {
@@ -168,8 +169,12 @@ export function KeyDataTable({ statusFilter, typeFilter, searchTerm }: KeyDataTa
     if (filteredKeys.length === 0) {
       return (
         <TableRow>
-          <TableCell colSpan={5} className="text-center text-muted-foreground">
-            No keys found.
+          <TableCell colSpan={5}>
+            <EmptyState
+              icon={<Inbox className="h-12 w-12" />}
+              title="No Keys Found"
+              description="No keys match your current search or filter criteria. Try adding a new key."
+            />
           </TableCell>
         </TableRow>
       );
