@@ -9,6 +9,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 const navItems = [
   { href: "/", label: "Dashboard", icon: Home },
@@ -21,6 +22,7 @@ export function AppSidebar(): JSX.Element {
   const location = useLocation();
   return (
     <Sidebar>
+      <SidebarRail />
       <SidebarHeader>
         <div className="flex items-center gap-2.5 px-2 py-1">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
