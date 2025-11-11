@@ -20,6 +20,7 @@ import { Personnel } from "@shared/types";
 import { Skeleton } from '@/components/ui/skeleton';
 import { EditPersonnelDialog } from './EditPersonnelDialog';
 import { DeleteDialog } from '../keys/DeleteDialog';
+import { PersonnelKeyHistorySheet } from './PersonnelKeyHistorySheet';
 import { useApiMutation } from '@/hooks/useApi';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
@@ -32,8 +33,9 @@ export function PersonnelDataTable({ data, isLoading, error }: PersonnelDataTabl
   const [dialogState, setDialogState] = useState<{
     edit?: Personnel;
     delete?: Personnel;
+    history?: Personnel;
   }>({});
-  const deleteMutation = useApiMutation<{}, string>(
+  const deleteMutation = useApiMutation<{ id: string }, string>(
     (personnelId) => api(`/api/personnel/${personnelId}`, { method: 'DELETE' }),
     [['personnel']]
   );
@@ -94,10 +96,12 @@ export function PersonnelDataTable({ data, isLoading, error }: PersonnelDataTabl
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => setDialogState({ history: person })}>
+                        View Assigned Keys
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setDialogState({ edit: person })}>
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem>View Assigned Keys</DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-destructive focus:text-destructive focus:bg-destructive/10"
                         onClick={() => setDialogState({ delete: person })}
@@ -129,6 +133,11 @@ export function PersonnelDataTable({ data, isLoading, error }: PersonnelDataTabl
           itemType="personnel record"
         />
       )}
+      <PersonnelKeyHistorySheet
+        isOpen={!!dialogState.history}
+        onOpenChange={(open) => !open && setDialogState({})}
+        personnelData={dialogState.history || null}
+      />
     </>
   );
 }

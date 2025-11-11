@@ -27,3 +27,12 @@ export interface KeyAssignment {
   dueDate: string;   // ISO 8601 string
   returnDate?: string; // ISO 8601 string
 }
+// Represents an assignment populated with the full key and personnel objects.
+export type PopulatedAssignment = KeyAssignment & {
+  key: Key;
+  personnel: Personnel;
+};
+// Represents a key with its full assignment history.
+export type KeyWithAssignments = Key & {
+  assignments: PopulatedAssignment[];
+};

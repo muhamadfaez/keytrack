@@ -11,15 +11,14 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Key, PopulatedAssignment } from "@shared/types";
 import { useApi } from '@/hooks/useApi';
-import { format } from 'date-fns';
-import { User, Clock, Calendar, Hash, KeyRound, MapPin, History, CaseSensitive, CheckCircle, Package } from 'lucide-react';
-import { EmptyState } from '../layout/EmptyState';
+import { format, formatDistanceToNow } from 'date-fns';
+import { User, Clock, Calendar, Hash, KeyRound, MapPin } from 'lucide-react';
 type KeyDetailsSheetProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   keyData: Key | null;
 };
-const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string | number }) => (
+const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
   <div className="flex items-start text-sm">
     <div className="text-muted-foreground mr-3 mt-0.5">{icon}</div>
     <div className="flex flex-col">
@@ -46,25 +45,15 @@ export function KeyDetailsSheet({ isOpen, onOpenChange, keyData }: KeyDetailsShe
       return <p className="text-destructive text-center">Error loading history: {error.message}</p>;
     }
     if (!history || history.length === 0) {
-      return (
-        <EmptyState
-          icon={<History className="h-12 w-12" />}
-          title="No Assignment History"
-          description="This key has not been issued to anyone yet."
-          className="py-4"
-        />
-      );
+      return <p className="text-muted-foreground text-center py-4">No assignment history for this key.</p>;
     }
     return (
       <div className="relative pl-6">
         <div className="absolute left-0 top-0 h-full w-px bg-border" />
-        {history.map((item) => (
+        {history.map((item, index) => (
           <div key={item.id} className="relative mb-6">
             <div className="absolute -left-[30.5px] top-1.5 h-5 w-5 rounded-full bg-primary" />
-            <p className="font-semibold">{item.user.name}</p>
-            <p className="text-sm text-muted-foreground capitalize flex items-center">
-              <CaseSensitive className="h-3 w-3 mr-1.5" /> Type: {item.assignmentType}
-            </p>
+            <p className="font-semibold">{item.personnel.name}</p>
             <p className="text-sm text-muted-foreground">
               Issued: {format(new Date(item.issueDate), 'MMM d, yyyy, h:mm a')}
             </p>
@@ -74,7 +63,7 @@ export function KeyDetailsSheet({ isOpen, onOpenChange, keyData }: KeyDetailsShe
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Due: {item.dueDate ? format(new Date(item.dueDate), 'MMM d, yyyy') : 'No due date'}
+                Due: {format(new Date(item.dueDate), 'MMM d, yyyy')}
               </p>
             )}
           </div>
@@ -99,8 +88,13 @@ export function KeyDetailsSheet({ isOpen, onOpenChange, keyData }: KeyDetailsShe
                 <DetailItem icon={<Hash size={16} />} label="Key Number" value={keyData.keyNumber} />
                 <DetailItem icon={<KeyRound size={16} />} label="Type" value={keyData.keyType} />
                 <DetailItem icon={<MapPin size={16} />} label="Room/Area" value={keyData.roomNumber} />
-                <DetailItem icon={<CheckCircle size={16} />} label="Available" value={keyData.availableQuantity} />
-                <DetailItem icon={<Package size={16} />} label="Total" value={keyData.totalQuantity} />
+                <div className="flex items-start text-sm">
+                  <div className="text-muted-foreground mr-3 mt-0.5"><Clock size={16} /></div>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-muted-foreground">Status</span>
+                    <Badge variant={keyData.status === 'Overdue' || keyData.status === 'Lost' ? 'destructive' : 'secondary'}>{keyData.status}</Badge>
+                  </div>
+                </div>
               </div>
             </div>
             <Separator />
