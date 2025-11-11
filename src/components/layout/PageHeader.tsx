@@ -1,16 +1,14 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
 type PageHeaderProps = {
   title: string;
   subtitle?: string;
   children?: React.ReactNode;
-  className?: string;
 };
-export function PageHeader({ title, subtitle, children, className }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
   return (
-    <div className={cn("flex flex-col md:flex-row items-start md:items-center justify-between mb-8 md:mb-10", className)}>
+    <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 md:mb-10">
       <div className="flex-1">
-        <h1 className="text-3xl md:text-4xl font-extrabold font-display text-foreground tracking-tight">
+        <h1 className="text-3xl md:text-4xl font-bold font-display text-foreground tracking-tight">
           {title}
         </h1>
         {subtitle && (

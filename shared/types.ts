@@ -3,22 +3,27 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
 }
-
-// Minimal real-world chat example types (shared by frontend and worker)
-export interface User {
+export type KeyStatus = "Available" | "Issued" | "Overdue" | "Lost";
+export interface Key {
+  id: string;
+  keyNumber: string;
+  keyType: string; // e.g., 'Master', 'Sub-Master', 'Single'
+  roomNumber: string;
+  status: KeyStatus;
+  currentHolderId?: string;
+}
+export interface Personnel {
   id: string;
   name: string;
+  email: string;
+  department: string;
+  phone: string;
 }
-
-export interface Chat {
+export interface KeyAssignment {
   id: string;
-  title: string;
-}
-
-export interface ChatMessage {
-  id: string;
-  chatId: string;
-  userId: string;
-  text: string;
-  ts: number; // epoch millis
+  keyId: string;
+  personnelId: string;
+  issueDate: string; // ISO 8601 string
+  dueDate: string;   // ISO 8601 string
+  returnDate?: string; // ISO 8601 string
 }
