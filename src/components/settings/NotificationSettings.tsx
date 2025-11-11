@@ -3,14 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from '../ui/separator';
-import { useSettingsStore } from '@/stores/settingsStore';
 export function NotificationSettings() {
-  const overdueKeys = useSettingsStore((state) => state.notifications.overdueKeys);
-  const keyReturns = useSettingsStore((state) => state.notifications.keyReturns);
-  const keyIssues = useSettingsStore((state) => state.notifications.keyIssues);
-  const toggleOverdueKeys = useSettingsStore((state) => state.toggleOverdueKeys);
-  const toggleKeyReturns = useSettingsStore((state) => state.toggleKeyReturns);
-  const toggleKeyIssues = useSettingsStore((state) => state.toggleKeyIssues);
   return (
     <Card>
       <CardHeader>
@@ -21,45 +14,33 @@ export function NotificationSettings() {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-center justify-between">
-          <Label htmlFor="overdue-keys" className="flex flex-col space-y-1 cursor-pointer">
+          <Label htmlFor="overdue-keys" className="flex flex-col space-y-1">
             <span>Overdue Keys</span>
             <span className="font-normal leading-snug text-muted-foreground">
               Receive a notification when a key becomes overdue.
             </span>
           </Label>
-          <Switch
-            id="overdue-keys"
-            checked={overdueKeys}
-            onCheckedChange={toggleOverdueKeys}
-          />
+          <Switch id="overdue-keys" defaultChecked />
         </div>
         <Separator />
         <div className="flex items-center justify-between">
-          <Label htmlFor="key-returns" className="flex flex-col space-y-1 cursor-pointer">
+          <Label htmlFor="key-returns" className="flex flex-col space-y-1">
             <span>Key Returns</span>
             <span className="font-normal leading-snug text-muted-foreground">
               Get notified when a key is successfully returned.
             </span>
           </Label>
-          <Switch
-            id="key-returns"
-            checked={keyReturns}
-            onCheckedChange={toggleKeyReturns}
-          />
+          <Switch id="key-returns" defaultChecked />
         </div>
         <Separator />
         <div className="flex items-center justify-between">
-          <Label htmlFor="key-issues" className="flex flex-col space-y-1 cursor-pointer">
+          <Label htmlFor="key-issues" className="flex flex-col space-y-1">
             <span>Key Issues</span>
             <span className="font-normal leading-snug text-muted-foreground">
               Get notified when a key is issued to someone.
             </span>
           </Label>
-          <Switch
-            id="key-issues"
-            checked={keyIssues}
-            onCheckedChange={toggleKeyIssues}
-          />
+          <Switch id="key-issues" />
         </div>
       </CardContent>
     </Card>

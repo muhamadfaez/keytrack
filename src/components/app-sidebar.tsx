@@ -10,6 +10,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarRail,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 const navItems = [
   { href: "/", label: "Dashboard", icon: Home },
@@ -45,7 +46,8 @@ export function AppSidebar(): JSX.Element {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="flex items-center justify-between border-t border-sidebar-border p-2">
+      <SidebarFooter className="flex flex-col items-start gap-2 border-t border-sidebar-border p-2">
+        <SidebarSeparator />
         <p className="text-xs text-muted-foreground px-2 group-data-[collapsible=icon]:hidden">
           Built with ❤️ at Cloudflare
         </p>

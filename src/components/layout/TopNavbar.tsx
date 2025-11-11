@@ -1,6 +1,5 @@
 import React from 'react';
 import { SidebarInset } from "@/components/ui/sidebar";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Notifications } from "./Notifications";
 import { UserNav } from "./UserNav";
 export function TopNavbar() {
@@ -11,7 +10,6 @@ export function TopNavbar() {
           <div className="flex-1" />
           <div className="flex items-center space-x-2">
             <Notifications />
-            <ThemeToggle />
             <UserNav />
           </div>
         </div>
