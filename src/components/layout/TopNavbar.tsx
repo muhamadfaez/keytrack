@@ -3,7 +3,6 @@ import { SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Notifications } from "./Notifications";
 import { UserNav } from "./UserNav";
-import { GlobalSearch } from './GlobalSearch';
 export function TopNavbar() {
   return (
     <SidebarInset className="fixed top-0 right-0 z-40">
@@ -12,7 +11,6 @@ export function TopNavbar() {
           <div className="lg:hidden">
             <SidebarTrigger />
           </div>
-          <GlobalSearch />
           <div className="flex-1" />
           <div className="flex items-center space-x-2">
             <Notifications />

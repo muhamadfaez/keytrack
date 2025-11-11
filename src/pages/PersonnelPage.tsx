@@ -4,15 +4,15 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Personnel } from "@shared/types";
 import { useApi } from "@/hooks/useApi";
 import { PersonnelDataTable } from "@/components/personnel/PersonnelDataTable";
 import { AddPersonnelDialog } from "@/components/personnel/AddPersonnelDialog";
-import { useSearchStore } from "@/stores/searchStore";
 export function PersonnelPage() {
   const { data: personnelData, isLoading, error } = useApi<{ items: Personnel[] }>(['personnel']);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
-  const searchTerm = useSearchStore((state) => state.searchTerm);
+  const [searchTerm, setSearchTerm] = useState('');
   const filteredPersonnel = useMemo(() => {
     if (!personnelData?.items) return [];
     return personnelData.items.filter(person =>
@@ -36,8 +36,13 @@ export function PersonnelPage() {
           </PageHeader>
           <Card>
             <CardContent className="pt-6">
-              <div className="md:hidden mb-4">
-                <p className="text-sm text-muted-foreground">Use the global search in the top bar to filter personnel.</p>
+              <div className="flex items-center justify-between mb-4">
+                <Input
+                  placeholder="Search personnel..."
+                  className="max-w-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
               <PersonnelDataTable
                 data={filteredPersonnel}
