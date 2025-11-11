@@ -3,6 +3,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { TopNavbar } from "./TopNavbar";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 type AppLayoutProps = {
   children: React.ReactNode;
   container?: boolean;
@@ -10,8 +11,9 @@ type AppLayoutProps = {
   contentClassName?: string;
 };
 export function AppLayout({ children, container = false, className, contentClassName }: AppLayoutProps): JSX.Element {
+  const isMobile = useIsMobile();
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={!isMobile}>
       <AppSidebar />
       <TopNavbar />
       <SidebarInset className={cn("pt-16", className)}>
