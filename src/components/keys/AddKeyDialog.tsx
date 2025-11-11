@@ -27,29 +27,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useApi, useApiMutation } from '@/hooks/useApi';
+import { useApiMutation } from '@/hooks/useApi';
 import { api } from '@/lib/api-client';
-import { Key, Room } from '@shared/types';
+import { Key } from '@shared/types';
 import { toast } from 'sonner';
 const keySchema = z.object({
   keyNumber: z.string().min(1, "Key number is required"),
   keyType: z.enum(["Single", "Master", "Sub-Master"]),
   roomNumber: z.string().min(1, "Room/Area is required"),
-  totalQuantity: z.number().int().positive("Quantity must be a positive number"),
 });
 type AddKeyDialogProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 };
 export function AddKeyDialog({ isOpen, onOpenChange }: AddKeyDialogProps) {
-  const { data: roomsData, isLoading: isLoadingRooms } = useApi<{ items: Room[] }>(['rooms']);
   const form = useForm<z.infer<typeof keySchema>>({
     resolver: zodResolver(keySchema),
     defaultValues: {
       keyNumber: "",
       keyType: "Single",
       roomNumber: "",
-      totalQuantity: 1,
     },
   });
   const createKeyMutation = useApiMutation<Key, Partial<Key>>(
@@ -120,41 +117,8 @@ export function AddKeyDialog({ isOpen, onOpenChange }: AddKeyDialogProps) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Room / Area</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={isLoadingRooms ? "Loading rooms..." : "Select a room"} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {roomsData?.items.map((room) => (
-                        <SelectItem key={room.id} value={room.roomNumber}>
-                          {room.roomNumber}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="totalQuantity"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Quantity</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      min="1"
-                      {...field}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        // Zod will handle empty string validation, RHF needs a number
-                        field.onChange(value === '' ? '' : parseInt(value, 10));
-                      }}
-                    />
+                    <Input placeholder="e.g., Room 205, Building A" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

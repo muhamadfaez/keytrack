@@ -16,6 +16,7 @@ import { KeyInventoryPage } from '@/pages/KeyInventoryPage';
 import { PersonnelPage } from '@/pages/PersonnelPage';
 import { ReportsPage } from '@/pages/ReportsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import { Toaster } from '@/components/ui/sonner';
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -50,6 +51,7 @@ createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
+        <Toaster richColors closeButton />
       </QueryClientProvider>
     </ErrorBoundary>
   </StrictMode>,

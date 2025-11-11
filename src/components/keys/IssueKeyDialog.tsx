@@ -22,22 +22,49 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import { Key, Personnel } from "@shared/types";
+import { Key, Personnel, KeyAssignment } from "@shared/types";
 import { cn } from "@/lib/utils";
+import { useApi, useApiMutation } from '@/hooks/useApi';
+import { api } from '@/lib/api-client';
+import { toast } from 'sonner';
 type IssueKeyDialogProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   keyData: Key;
+  onSuccess?: () => void;
 };
-const mockPersonnel: Personnel[] = [
-  { id: 'p1', name: 'Alice Johnson', email: 'alice.j@university.edu', department: 'Facilities Management', phone: '(555) 123-4567' },
-  { id: 'p2', name: 'Dr. Bob Williams', email: 'bob.w@university.edu', department: 'Physics Department', phone: '(555) 234-5678' },
-  { id: 'p3', name: 'Charlie Brown', email: 'charlie.b@university.edu', department: 'Student Housing', phone: '(555) 345-6789' },
-];
-export function IssueKeyDialog({ isOpen, onOpenChange, keyData }: IssueKeyDialogProps) {
-  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
+export function IssueKeyDialog({ isOpen, onOpenChange, keyData, onSuccess }: IssueKeyDialogProps) {
+  const [personnelId, setPersonnelId] = useState<string | undefined>();
+  const [dueDate, setDueDate] = useState<Date | undefined>();
+  const { data: personnelData, isLoading: isLoadingPersonnel } = useApi<{ items: Personnel[] }>(['personnel']);
+  const issueKeyMutation = useApiMutation<KeyAssignment, Partial<KeyAssignment>>(
+    (newAssignment) => api('/api/assignments', { method: 'POST', body: JSON.stringify(newAssignment) }),
+    [['keys'], ['assignments', 'recent']]
+  );
+  const handleSubmit = () => {
+    if (!personnelId || !dueDate) {
+      toast.error("Please select personnel and a due date.");
+      return;
+    }
+    const assignmentData = {
+      keyId: keyData.id,
+      personnelId,
+      dueDate: dueDate.toISOString(),
+    };
+    issueKeyMutation.mutate(assignmentData, {
+      onSuccess: () => {
+        onSuccess?.();
+        onOpenChange(false);
+        setPersonnelId(undefined);
+        setDueDate(undefined);
+      },
+      onError: (error) => {
+        toast.error(`Failed to issue key: ${error.message}`);
+      },
+    });
+  };
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -52,12 +79,12 @@ export function IssueKeyDialog({ isOpen, onOpenChange, keyData }: IssueKeyDialog
             <Label htmlFor="personnel" className="text-right">
               Personnel
             </Label>
-            <Select>
+            <Select onValueChange={setPersonnelId} value={personnelId}>
               <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a person" />
+                <SelectValue placeholder={isLoadingPersonnel ? "Loading..." : "Select a person"} />
               </SelectTrigger>
               <SelectContent>
-                {mockPersonnel.map((person) => (
+                {personnelData?.items.map((person) => (
                   <SelectItem key={person.id} value={person.id}>
                     {person.name} ({person.department})
                   </SelectItem>
@@ -88,6 +115,7 @@ export function IssueKeyDialog({ isOpen, onOpenChange, keyData }: IssueKeyDialog
                   selected={dueDate}
                   onSelect={setDueDate}
                   initialFocus
+                  disabled={(date) => date < new Date()}
                 />
               </PopoverContent>
             </Popover>
@@ -95,7 +123,10 @@ export function IssueKeyDialog({ isOpen, onOpenChange, keyData }: IssueKeyDialog
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="submit">Issue Key</Button>
+          <Button type="button" onClick={handleSubmit} disabled={issueKeyMutation.isPending}>
+            {issueKeyMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Issue Key
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

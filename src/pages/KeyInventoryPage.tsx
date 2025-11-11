@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { KeyDataTable } from "@/components/keys/KeyDataTable";
+import { AddKeyDialog } from "@/components/keys/AddKeyDialog";
 export function KeyInventoryPage() {
+  const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -12,7 +15,7 @@ export function KeyInventoryPage() {
             title="Key Inventory"
             subtitle="Manage all keys in the university system."
           >
-            <Button>
+            <Button onClick={() => setAddDialogOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add New Key
             </Button>
@@ -20,6 +23,7 @@ export function KeyInventoryPage() {
           <KeyDataTable />
         </div>
       </div>
+      <AddKeyDialog isOpen={isAddDialogOpen} onOpenChange={setAddDialogOpen} />
     </AppLayout>
   );
 }

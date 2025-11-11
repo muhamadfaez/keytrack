@@ -24,6 +24,7 @@ import { IssueKeyDialog } from './IssueKeyDialog';
 import { Card, CardContent } from '../ui/card';
 import { useApi } from '@/hooks/useApi';
 import { Skeleton } from '../ui/skeleton';
+import { toast } from 'sonner';
 const StatusBadge = ({ status }: { status: KeyStatus }) => {
   const variantMap: Record<KeyStatus, BadgeProps["variant"]> = {
     Available: "secondary",
@@ -40,6 +41,11 @@ export function KeyDataTable() {
   const handleIssueKey = (key: Key) => {
     setSelectedKey(key);
     setIssueDialogOpen(true);
+  };
+  const handleIssueSuccess = () => {
+    if (selectedKey) {
+      toast.success(`Key "${selectedKey.keyNumber}" has been successfully issued.`);
+    }
   };
   const renderContent = () => {
     if (isLoading) {
@@ -136,6 +142,7 @@ export function KeyDataTable() {
           isOpen={isIssueDialogOpen}
           onOpenChange={setIssueDialogOpen}
           keyData={selectedKey}
+          onSuccess={handleIssueSuccess}
         />
       )}
     </>

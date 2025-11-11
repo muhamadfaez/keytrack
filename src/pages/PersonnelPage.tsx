@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -7,8 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Personnel } from "@shared/types";
 import { useApi } from "@/hooks/useApi";
 import { PersonnelDataTable } from "@/components/personnel/PersonnelDataTable";
+import { AddPersonnelDialog } from "@/components/personnel/AddPersonnelDialog";
 export function PersonnelPage() {
   const { data: personnelData, isLoading, error } = useApi<{ items: Personnel[] }>(['personnel']);
+  const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -17,7 +20,7 @@ export function PersonnelPage() {
             title="Personnel"
             subtitle="Manage all faculty, staff, and contractors."
           >
-            <Button>
+            <Button onClick={() => setAddDialogOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Personnel
             </Button>
@@ -27,15 +30,16 @@ export function PersonnelPage() {
               <div className="flex items-center justify-between mb-4">
                 <Input placeholder="Search personnel..." className="max-w-sm" />
               </div>
-              <PersonnelDataTable 
-                data={personnelData?.items || []} 
-                isLoading={isLoading} 
-                error={error} 
+              <PersonnelDataTable
+                data={personnelData?.items || []}
+                isLoading={isLoading}
+                error={error}
               />
             </CardContent>
           </Card>
         </div>
       </div>
+      <AddPersonnelDialog isOpen={isAddDialogOpen} onOpenChange={setAddDialogOpen} />
     </AppLayout>
   );
 }
