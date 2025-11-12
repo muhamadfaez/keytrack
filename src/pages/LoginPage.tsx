@@ -14,32 +14,37 @@ import { Label } from '@/components/ui/label';
 import { Lock, Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
+import { GoogleIcon } from '@/components/icons/GoogleIcon';
 export function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('admin@university.edu');
   const [password, setPassword] = useState('password');
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
+  const performLogin = () => {
     setIsLoading(true);
     // Simulate API call
     setTimeout(() => {
-      // In a real app, you'd validate credentials here.
-      // For this mock, we'll just log in successfully.
-      if (email && password) {
-        login();
-        toast.success('Login Successful', {
-          description: 'Welcome back! Redirecting you to the dashboard...',
-        });
-        navigate('/');
-      } else {
-        toast.error('Login Failed', {
-          description: 'Please enter your credentials.',
-        });
-        setIsLoading(false);
-      }
+      login();
+      toast.success('Login Successful', {
+        description: 'Welcome back! Redirecting you to the dashboard...',
+      });
+      navigate('/');
     }, 1000);
+  };
+  const handleCredentialLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email && password) {
+      performLogin();
+    } else {
+      toast.error('Login Failed', {
+        description: 'Please enter your credentials.',
+      });
+    }
+  };
+  const handleGoogleLogin = () => {
+    // This is a simulated login as per requirements.
+    performLogin();
   };
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center bg-background">
@@ -57,9 +62,9 @@ export function LoginPage() {
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
             Enter your credentials to access the system.
-          </CardDescription>
+          </-CardDescription>
         </CardHeader>
-        <form onSubmit={handleLogin}>
+        <form onSubmit={handleCredentialLogin}>
           <CardContent className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
@@ -84,13 +89,29 @@ export function LoginPage() {
                 disabled={isLoading}
               />
             </div>
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full" type="submit" disabled={isLoading}>
+            <Button className="w-full mt-2" type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sign In
             </Button>
-          </CardFooter>
+            <div className="relative my-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+            <Button variant="outline" className="w-full" type="button" onClick={handleGoogleLogin} disabled={isLoading}>
+              {isLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <GoogleIcon className="mr-2 h-4 w-4" />
+              )}
+              Sign in with Google
+            </Button>
+          </CardContent>
         </form>
       </Card>
       <p className="text-center text-sm text-muted-foreground mt-8 z-10">
