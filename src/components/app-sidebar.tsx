@@ -51,20 +51,7 @@ export function AppSidebar(): JSX.Element {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="flex flex-col items-start gap-2 border-t border-sidebar-border p-2">
-        <SidebarSeparator />
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={toggleSidebar}
-              tooltip={isCollapsed ? "Expand" : "Collapse"}
-            >
-              {isCollapsed ? <PanelRight className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
-              <span className="group-data-[state=collapsed]:hidden">{isCollapsed ? "Expand" : "Collapse"}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
+      <SidebarFooter className="flex flex-col items-start gap-2 border-t border-sidebar-border p-2"></SidebarFooter>
     </Sidebar>
   );
 }
