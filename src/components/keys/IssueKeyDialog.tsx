@@ -21,6 +21,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
@@ -38,20 +39,26 @@ type IssueKeyDialogProps = {
 export function IssueKeyDialog({ isOpen, onOpenChange, keyData, onSuccess }: IssueKeyDialogProps) {
   const [personnelId, setPersonnelId] = useState<string | undefined>();
   const [dueDate, setDueDate] = useState<Date | undefined>();
+  const [assignmentType, setAssignmentType] = useState<"event" | "personal">("event");
   const { data: personnelData, isLoading: isLoadingPersonnel } = useApi<{ items: Personnel[] }>(['personnel']);
   const issueKeyMutation = useApiMutation<KeyAssignment, Partial<KeyAssignment>>(
     (newAssignment) => api('/api/assignments', { method: 'POST', body: JSON.stringify(newAssignment) }),
-    [['keys'], ['assignments', 'recent']]
+    [['keys'], ['assignments', 'recent'], ['stats'], ['reports', 'summary']]
   );
   const handleSubmit = () => {
-    if (!personnelId || !dueDate) {
-      toast.error("Please select personnel and a due date.");
+    if (!personnelId) {
+      toast.error("Please select personnel.");
       return;
     }
-    const assignmentData = {
+    if (assignmentType === 'event' && !dueDate) {
+      toast.error("Please select a due date for an event assignment.");
+      return;
+    }
+    const assignmentData: Partial<KeyAssignment> = {
       keyId: keyData.id,
       personnelId,
-      dueDate: dueDate.toISOString(),
+      assignmentType,
+      dueDate: assignmentType === 'event' ? dueDate?.toISOString() : undefined,
     };
     issueKeyMutation.mutate(assignmentData, {
       onSuccess: () => {
@@ -59,6 +66,7 @@ export function IssueKeyDialog({ isOpen, onOpenChange, keyData, onSuccess }: Iss
         onOpenChange(false);
         setPersonnelId(undefined);
         setDueDate(undefined);
+        setAssignmentType("event");
       },
       onError: (error) => {
         toast.error(`Failed to issue key: ${error.message}`);
@@ -93,33 +101,52 @@ export function IssueKeyDialog({ isOpen, onOpenChange, keyData, onSuccess }: Iss
             </Select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="due-date" className="text-right">
-              Due Date
-            </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "col-span-3 justify-start text-left font-normal",
-                    !dueDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={dueDate}
-                  onSelect={setDueDate}
-                  initialFocus
-                  disabled={(date) => date < new Date()}
-                />
-              </PopoverContent>
-            </Popover>
+            <Label className="text-right">Type</Label>
+            <RadioGroup
+              defaultValue="event"
+              className="col-span-3 flex items-center space-x-4"
+              onValueChange={(value: "event" | "personal") => setAssignmentType(value)}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="event" id="r-event" />
+                <Label htmlFor="r-event">Event</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="personal" id="r-personal" />
+                <Label htmlFor="r-personal">Personal</Label>
+              </div>
+            </RadioGroup>
           </div>
+          {assignmentType === 'event' && (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="due-date" className="text-right">
+                Due Date
+              </Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "col-span-3 justify-start text-left font-normal",
+                      !dueDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={setDueDate}
+                    initialFocus
+                    disabled={(date) => date < new Date()}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>

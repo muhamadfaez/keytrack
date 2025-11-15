@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Key, PopulatedAssignment } from "@shared/types";
 import { useApi } from '@/hooks/useApi';
 import { format } from 'date-fns';
-import { User, Clock, Calendar, Hash, KeyRound, MapPin, History } from 'lucide-react';
+import { User, Clock, Calendar, Hash, KeyRound, MapPin, History, CaseSensitive } from 'lucide-react';
 import { EmptyState } from '../layout/EmptyState';
 type KeyDetailsSheetProps = {
   isOpen: boolean;
@@ -62,6 +62,9 @@ export function KeyDetailsSheet({ isOpen, onOpenChange, keyData }: KeyDetailsShe
           <div key={item.id} className="relative mb-6">
             <div className="absolute -left-[30.5px] top-1.5 h-5 w-5 rounded-full bg-primary" />
             <p className="font-semibold">{item.personnel.name}</p>
+            <p className="text-sm text-muted-foreground capitalize flex items-center">
+              <CaseSensitive className="h-3 w-3 mr-1.5" /> Type: {item.assignmentType}
+            </p>
             <p className="text-sm text-muted-foreground">
               Issued: {format(new Date(item.issueDate), 'MMM d, yyyy, h:mm a')}
             </p>
@@ -71,7 +74,7 @@ export function KeyDetailsSheet({ isOpen, onOpenChange, keyData }: KeyDetailsShe
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Due: {format(new Date(item.dueDate), 'MMM d, yyyy')}
+                Due: {item.dueDate ? format(new Date(item.dueDate), 'MMM d, yyyy') : 'No due date'}
               </p>
             )}
           </div>

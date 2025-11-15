@@ -7,7 +7,8 @@ async function checkAndUpdateOverdueKeys(env: Env) {
   const assignments = await KeyAssignmentEntity.list(env);
   const activeAssignments = assignments.items.filter(a => !a.returnDate);
   for (const assignment of activeAssignments) {
-    if (new Date() > new Date(assignment.dueDate)) {
+    // Only event assignments with a due date can be overdue.
+    if (assignment.assignmentType === 'event' && assignment.dueDate && new Date() > new Date(assignment.dueDate)) {
       const key = new KeyEntity(env, assignment.keyId);
       if (await key.exists()) {
         const keyState = await key.getState();
@@ -78,7 +79,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       .filter(k => k.status === 'Overdue')
       .map(async (key): Promise<OverdueKeyInfo | null> => {
         const assignment = allAssignments.find(a => a.keyId === key.id && !a.returnDate);
-        if (assignment) {
+        if (assignment && assignment.dueDate) {
           const person = personnelMap.get(assignment.personnelId);
           return {
             keyNumber: key.keyNumber,
@@ -261,8 +262,12 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // --- ASSIGNMENTS ---
   app.post('/api/assignments', async (c) => {
     const body = await c.req.json<Partial<KeyAssignment>>();
-    if (!isStr(body.keyId) || !isStr(body.personnelId) || !isStr(body.dueDate)) {
-      return bad(c, 'keyId, personnelId, and dueDate are required');
+    if (!isStr(body.keyId) || !isStr(body.personnelId)) {
+      return bad(c, 'keyId and personnelId are required');
+    }
+    const assignmentType = body.assignmentType || 'event';
+    if (assignmentType === 'event' && !isStr(body.dueDate)) {
+      return bad(c, 'dueDate is required for event assignments');
     }
     const key = new KeyEntity(c.env, body.keyId);
     if (!(await key.exists()) || (await key.getState()).status !== 'Available') {
@@ -275,6 +280,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       keyId: body.keyId,
       personnelId: body.personnelId,
       issueDate: new Date().toISOString(),
+      assignmentType: assignmentType,
       dueDate: body.dueDate,
     };
     await key.patch({ status: 'Issued' });

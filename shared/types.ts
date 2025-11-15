@@ -24,7 +24,8 @@ export interface KeyAssignment {
   keyId: string;
   personnelId: string;
   issueDate: string; // ISO 8601 string
-  dueDate: string;   // ISO 8601 string
+  assignmentType: "personal" | "event";
+  dueDate?: string;   // ISO 8601 string
   returnDate?: string; // ISO 8601 string
 }
 // Represents an assignment populated with the full key and personnel objects.

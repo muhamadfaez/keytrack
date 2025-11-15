@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Personnel, PopulatedAssignment } from "@shared/types";
 import { useApi } from '@/hooks/useApi';
 import { format } from 'date-fns';
-import { KeyRound, Calendar, CheckCircle, AlertTriangle, History } from 'lucide-react';
+import { KeyRound, Calendar, CheckCircle, AlertTriangle, History, CaseSensitive } from 'lucide-react';
 import { EmptyState } from '../layout/EmptyState';
 type PersonnelKeyHistorySheetProps = {
   isOpen: boolean;
@@ -61,7 +61,12 @@ export function PersonnelKeyHistorySheet({ isOpen, onOpenChange, personnelData }
             </div>
             <div className="flex-1">
               <div className="flex justify-between items-start">
-                <p className="font-semibold">{item.key.keyNumber}</p>
+                <div>
+                  <p className="font-semibold">{item.key.keyNumber}</p>
+                  <p className="text-xs text-muted-foreground capitalize flex items-center">
+                    <CaseSensitive className="h-3 w-3 mr-1" /> {item.assignmentType}
+                  </p>
+                </div>
                 <Badge variant={item.returnDate ? 'outline' : (item.key.status === 'Overdue' ? 'destructive' : 'secondary')}>
                   {item.returnDate ? 'Returned' : item.key.status}
                 </Badge>
@@ -71,7 +76,7 @@ export function PersonnelKeyHistorySheet({ isOpen, onOpenChange, personnelData }
                 <Calendar className="h-3 w-3 mr-1.5" />
                 <span>Issued: {format(new Date(item.issueDate), 'MMM d, yyyy')}</span>
                 <span className="mx-2">|</span>
-                <span>Due: {format(new Date(item.dueDate), 'MMM d, yyyy')}</span>
+                <span>Due: {item.dueDate ? format(new Date(item.dueDate), 'MMM d, yyyy') : 'N/A'}</span>
               </div>
             </div>
           </div>

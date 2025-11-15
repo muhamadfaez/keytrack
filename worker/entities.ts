@@ -33,7 +33,7 @@ export class KeyAssignmentEntity extends IndexedEntity<KeyAssignment> {
     keyId: "",
     personnelId: "",
     issueDate: "",
-    dueDate: "",
+    assignmentType: "event",
   };
 }
 // NOTIFICATION ENTITY
