@@ -19,7 +19,7 @@ const addHeaderAndFooter = (doc: jsPDF, title: string) => {
     doc.setFontSize(16);
     doc.setTextColor(40);
     doc.setFont('helvetica', 'bold');
-    doc.text('KeyTrack - Reports', pageWidth / 2, 15, { align: 'center' });
+    doc.text('Keystone Access - Reports', pageWidth / 2, 15, { align: 'center' });
     doc.setFontSize(12);
     doc.setTextColor(100);
     doc.setFont('helvetica', 'normal');
@@ -39,34 +39,34 @@ export const exportToPdf = (reportData: ReportSummary) => {
     startY: 30,
     head: [['Key Status Distribution']],
     body: [
-      ['Status', 'Count']
-    ].concat(reportData.statusDistribution.map(item => [item.name, item.value.toString()])),
+      [{ content: 'Status', styles: { fontStyle: 'bold' } }, { content: 'Count', styles: { fontStyle: 'bold' } }]
+    ].concat(reportData.statusDistribution.map(item => [item.name, item.value])),
     theme: 'grid',
-    headStyles: { fillColor: [22, 163, 74], fontStyle: 'bold' },
+    headStyles: { fillColor: [22, 163, 74] },
   });
   // Department Activity Table
   doc.autoTable({
     head: [['Keys Issued by Department']],
     body: [
-      ['Department', 'Keys Issued']
-    ].concat(reportData.departmentActivity.map(item => [item.name, item.keys.toString()])),
+      [{ content: 'Department', styles: { fontStyle: 'bold' } }, { content: 'Keys Issued', styles: { fontStyle: 'bold' } }]
+    ].concat(reportData.departmentActivity.map(item => [item.name, item.keys])),
     theme: 'grid',
-    headStyles: { fillColor: [37, 99, 235], fontStyle: 'bold' },
+    headStyles: { fillColor: [37, 99, 235] },
   });
   // Overdue Keys Table
   if (reportData.overdueKeys.length > 0) {
     doc.autoTable({
       head: [['Overdue Keys Report']],
       body: [
-        ['Key Number', 'Assigned To', 'Department', 'Due Date']
+        ['Key Number', 'Assigned To', 'Department', 'Due Date'].map(h => ({ content: h, styles: { fontStyle: 'bold' } }))
       ].concat(reportData.overdueKeys.map(item => [
         item.keyNumber,
-        item.userName,
+        item.personName,
         item.department,
         format(new Date(item.dueDate), 'MMM dd, yyyy')
       ])),
       theme: 'grid',
-      headStyles: { fillColor: [220, 38, 38], fontStyle: 'bold' },
+      headStyles: { fillColor: [220, 38, 38] },
     });
   } else {
     doc.autoTable({
@@ -75,7 +75,7 @@ export const exportToPdf = (reportData: ReportSummary) => {
     });
   }
   addHeaderAndFooter(doc, title);
-  doc.save(`KeyTrack_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+  doc.save(`Keystone_Access_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
 };
 export const exportToExcel = (reportData: ReportSummary) => {
   const wb = utils.book_new();
@@ -95,12 +95,12 @@ export const exportToExcel = (reportData: ReportSummary) => {
       reportData.overdueKeys.map(item => ({
         'Key Number': item.keyNumber,
         'Room/Area': item.roomNumber,
-        'Assigned To': item.userName,
+        'Assigned To': item.personName,
         'Department': item.department,
         'Due Date': format(new Date(item.dueDate), 'yyyy-MM-dd'),
       }))
     );
     utils.book_append_sheet(wb, wsOverdue, 'Overdue Keys');
   }
-  writeFile(wb, `KeyTrack_Report_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+  writeFile(wb, `Keystone_Access_Report_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
 };
