@@ -279,7 +279,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       id: crypto.randomUUID(),
       keyId: body.keyId,
       personnelId: body.personnelId,
-      issueDate: new Date().toISOString(),
+      issueDate: body.issueDate || new Date().toISOString(),
       assignmentType: assignmentType,
       dueDate: body.dueDate,
     };

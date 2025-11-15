@@ -38,6 +38,7 @@ type IssueKeyDialogProps = {
 };
 export function IssueKeyDialog({ isOpen, onOpenChange, keyData, onSuccess }: IssueKeyDialogProps) {
   const [personnelId, setPersonnelId] = useState<string | undefined>();
+  const [issueDate, setIssueDate] = useState<Date | undefined>(new Date());
   const [dueDate, setDueDate] = useState<Date | undefined>();
   const [assignmentType, setAssignmentType] = useState<"event" | "personal">("event");
   const { data: personnelData, isLoading: isLoadingPersonnel } = useApi<{ items: Personnel[] }>(['personnel']);
@@ -50,6 +51,10 @@ export function IssueKeyDialog({ isOpen, onOpenChange, keyData, onSuccess }: Iss
       toast.error("Please select personnel.");
       return;
     }
+    if (!issueDate) {
+      toast.error("Please select an issue date.");
+      return;
+    }
     if (assignmentType === 'event' && !dueDate) {
       toast.error("Please select a due date for an event assignment.");
       return;
@@ -57,6 +62,7 @@ export function IssueKeyDialog({ isOpen, onOpenChange, keyData, onSuccess }: Iss
     const assignmentData: Partial<KeyAssignment> = {
       keyId: keyData.id,
       personnelId,
+      issueDate: issueDate.toISOString(),
       assignmentType,
       dueDate: assignmentType === 'event' ? dueDate?.toISOString() : undefined,
     };
@@ -65,6 +71,7 @@ export function IssueKeyDialog({ isOpen, onOpenChange, keyData, onSuccess }: Iss
         onSuccess?.();
         onOpenChange(false);
         setPersonnelId(undefined);
+        setIssueDate(new Date());
         setDueDate(undefined);
         setAssignmentType("event");
       },
@@ -99,6 +106,34 @@ export function IssueKeyDialog({ isOpen, onOpenChange, keyData, onSuccess }: Iss
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="issue-date" className="text-right">
+              Issue Date
+            </Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "col-span-3 justify-start text-left font-normal",
+                    !issueDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {issueDate ? format(issueDate, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={issueDate}
+                  onSelect={setIssueDate}
+                  initialFocus
+                  disabled={(date) => date > new Date()}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label className="text-right">Type</Label>
