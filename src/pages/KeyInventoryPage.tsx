@@ -31,6 +31,7 @@ export function KeyInventoryPage() {
           <PageHeader
             title="Key Inventory"
             subtitle="Manage all keys in the university system."
+            className="!mb-6"
           >
             {user?.role === 'admin' && (
               <Button onClick={() => setAddDialogOpen(true)}>
@@ -39,41 +40,36 @@ export function KeyInventoryPage() {
               </Button>
             )}
           </PageHeader>
-          <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 mb-6">
-            <Input
-              placeholder="Search keys..."
-              className="w-full md:max-w-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium">Status:</label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full md:w-[180px]">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    <SelectItem value="Available">Available</SelectItem>
-                    <SelectItem value="Issued">Fully Issued</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium">Type:</label>
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-full md:w-[180px]">
-                    <SelectValue placeholder="Filter by type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="Single">Single</SelectItem>
-                    <SelectItem value="Master">Master</SelectItem>
-                    <SelectItem value="Sub-Master">Sub-Master</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+            <div className="w-full md:max-w-sm">
+              <Input
+                placeholder="Search keys..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="Available">Available</SelectItem>
+                  <SelectItem value="Issued">Fully Issued</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="Single">Single</SelectItem>
+                  <SelectItem value="Master">Master</SelectItem>
+                  <SelectItem value="Sub-Master">Sub-Master</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <KeyDataTable
