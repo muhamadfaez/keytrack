@@ -35,7 +35,7 @@ const createKeySchema = (issuedCount: number) => z.object({
   keyNumber: z.string().min(1, "Key number is required"),
   keyType: z.enum(["Single", "Master", "Sub-Master"]),
   roomNumber: z.string().min(1, "Room/Area is required"),
-  totalQuantity: z.coerce.number().int().positive("Quantity must be a positive number"),
+  totalQuantity: z.number().int().positive("Quantity must be a positive number"),
 }).refine(data => data.totalQuantity >= issuedCount, {
   message: `Quantity cannot be less than the number of issued keys (${issuedCount}).`,
   path: ["totalQuantity"],
@@ -148,7 +148,15 @@ export function EditKeyDialog({ isOpen, onOpenChange, keyData }: EditKeyDialogPr
                 <FormItem>
                   <FormLabel>Total Quantity</FormLabel>
                   <FormControl>
-                    <Input type="number" min={issuedCount} {...field} />
+                    <Input
+                      type="number"
+                      min={issuedCount}
+                      {...field}
+                      onChange={e => {
+                        const value = e.target.value;
+                        field.onChange(value === '' ? '' : parseInt(value, 10));
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

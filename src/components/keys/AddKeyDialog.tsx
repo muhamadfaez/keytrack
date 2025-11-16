@@ -35,7 +35,7 @@ const keySchema = z.object({
   keyNumber: z.string().min(1, "Key number is required"),
   keyType: z.enum(["Single", "Master", "Sub-Master"]),
   roomNumber: z.string().min(1, "Room/Area is required"),
-  totalQuantity: z.coerce.number().int().positive("Quantity must be a positive number"),
+  totalQuantity: z.number().int().positive("Quantity must be a positive number"),
 });
 type AddKeyDialogProps = {
   isOpen: boolean;
@@ -133,7 +133,16 @@ export function AddKeyDialog({ isOpen, onOpenChange }: AddKeyDialogProps) {
                 <FormItem>
                   <FormLabel>Quantity</FormLabel>
                   <FormControl>
-                    <Input type="number" min="1" {...field} />
+                    <Input
+                      type="number"
+                      min="1"
+                      {...field}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Zod will handle empty string validation, RHF needs a number
+                        field.onChange(value === '' ? '' : parseInt(value, 10));
+                      }}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
