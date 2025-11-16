@@ -17,6 +17,7 @@ import { UsersPage } from '@/pages/UsersPage';
 import { ReportsPage } from '@/pages/ReportsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { Toaster } from '@/components/ui/sonner';
+import { ThemeProvider } from 'next-themes';
 import { LoginPage } from './pages/LoginPage';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { ProfilePage } from './pages/ProfilePage';
@@ -82,11 +83,13 @@ const router = createBrowserRouter([
 // Do not touch this code
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-        <Toaster richColors closeButton />
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+          <Toaster richColors closeButton />
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </ThemeProvider>
   </StrictMode>,
 )
