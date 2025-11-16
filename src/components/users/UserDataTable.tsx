@@ -60,9 +60,9 @@ export function UserDataTable({ searchTerm }: UserDataTableProps) {
   const filteredUsers = useMemo(() => {
     if (!sortedUsers) return [];
     return sortedUsers.filter(user =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.department.toLowerCase().includes(searchTerm.toLowerCase())
+      (user.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.department ?? '').toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [sortedUsers, searchTerm]);
   const requestSort = (key: SortableKey) => {
