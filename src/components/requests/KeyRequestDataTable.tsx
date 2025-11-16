@@ -22,7 +22,9 @@ import { Card, CardContent } from '../ui/card';
 import { useApi } from '@/hooks/useApi';
 import { Skeleton } from '../ui/skeleton';
 import { EmptyState } from '../layout/EmptyState';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
+import { ApproveRequestDialog } from './ApproveRequestDialog';
+import { RejectRequestDialog } from './RejectRequestDialog';
 const StatusBadge = ({ status }: { status: KeyRequestStatus }) => {
   const variantMap: Record<KeyRequestStatus, BadgeProps["variant"]> = {
     Pending: "default",
@@ -36,6 +38,10 @@ type SortDirection = 'ascending' | 'descending';
 export function KeyRequestDataTable() {
   const { data: requests, isLoading, error } = useApi<PopulatedKeyRequest[]>(['requests']);
   const [sortConfig, setSortConfig] = useState<{ key: SortableKey; direction: SortDirection } | null>(null);
+  const [dialogState, setDialogState] = useState<{
+    approve?: PopulatedKeyRequest;
+    reject?: PopulatedKeyRequest;
+  }>({});
   const sortedRequests = useMemo(() => {
     let sortableItems = requests ? [...requests] : [];
     if (sortConfig !== null) {
@@ -113,8 +119,14 @@ export function KeyRequestDataTable() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem disabled={request.status !== 'Pending'}>Approve</DropdownMenuItem>
-              <DropdownMenuItem disabled={request.status !== 'Pending'} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+              <DropdownMenuItem onSelect={() => setDialogState({ approve: request })} disabled={request.status !== 'Pending'}>
+                Approve
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => setDialogState({ reject: request })}
+                disabled={request.status !== 'Pending'}
+                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+              >
                 Reject
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -124,44 +136,60 @@ export function KeyRequestDataTable() {
     ));
   };
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="border rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>
-                  <Button variant="ghost" size="sm" onClick={() => requestSort('personnel.name')}>
-                    Requester {getSortIcon('personnel.name')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" size="sm" onClick={() => requestSort('requestedKeyInfo')}>
-                    Requested Key {getSortIcon('requestedKeyInfo')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" size="sm" onClick={() => requestSort('status')}>
-                    Status {getSortIcon('status')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" size="sm" onClick={() => requestSort('issueDate')}>
-                    Issue Date {getSortIcon('issueDate')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" size="sm" onClick={() => requestSort('dueDate')}>
-                    Due Date {getSortIcon('dueDate')}
-                  </Button>
-                </TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>{renderContent()}</TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+    <>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <Button variant="ghost" size="sm" onClick={() => requestSort('personnel.name')}>
+                      Requester {getSortIcon('personnel.name')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" size="sm" onClick={() => requestSort('requestedKeyInfo')}>
+                      Requested Key {getSortIcon('requestedKeyInfo')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" size="sm" onClick={() => requestSort('status')}>
+                      Status {getSortIcon('status')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" size="sm" onClick={() => requestSort('issueDate')}>
+                      Issue Date {getSortIcon('issueDate')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button variant="ghost" size="sm" onClick={() => requestSort('dueDate')}>
+                      Due Date {getSortIcon('dueDate')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>{renderContent()}</TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+      {dialogState.approve && (
+        <ApproveRequestDialog
+          isOpen={!!dialogState.approve}
+          onOpenChange={(open) => !open && setDialogState({})}
+          request={dialogState.approve}
+        />
+      )}
+      {dialogState.reject && (
+        <RejectRequestDialog
+          isOpen={!!dialogState.reject}
+          onOpenChange={(open) => !open && setDialogState({})}
+          request={dialogState.reject}
+        />
+      )}
+    </>
   );
 }

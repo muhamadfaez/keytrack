@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,7 +20,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -46,7 +45,9 @@ const requestSchema = z.object({
   personnelId: z.string().min(1, "Personnel is required"),
   requestedKeyInfo: z.string().min(1, "Key information is required"),
   assignmentType: z.enum(["event", "personal"]),
-  issueDate: z.date({ required_error: "Issue date is required" }),
+  issueDate: z.date({
+    required_error: "Issue date is required.",
+  }),
   dueDate: z.date().optional(),
 }).refine(data => {
   if (data.assignmentType === 'event') {

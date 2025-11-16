@@ -372,4 +372,58 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     await NotificationEntity.create(c.env, newNotification);
     return ok(c, createdRequest);
   });
+  app.post('/api/requests/:id/approve', async (c) => {
+    const requestId = c.req.param('id');
+    const { keyId } = await c.req.json<{ keyId: string }>();
+    if (!isStr(keyId)) return bad(c, 'keyId is required');
+    const requestEntity = new KeyRequestEntity(c.env, requestId);
+    if (!(await requestEntity.exists())) return notFound(c, 'Request not found');
+    const request = await requestEntity.getState();
+    if (request.status !== 'Pending') return bad(c, 'Request is not pending');
+    const keyEntity = new KeyEntity(c.env, keyId);
+    if (!(await keyEntity.exists())) return notFound(c, 'Selected key not found');
+    const key = await keyEntity.getState();
+    if (key.status !== 'Available') return bad(c, 'Selected key is not available');
+    // Create assignment
+    const newAssignment: KeyAssignment = {
+      id: crypto.randomUUID(),
+      keyId: key.id,
+      personnelId: request.personnelId,
+      issueDate: request.issueDate,
+      assignmentType: request.assignmentType,
+      dueDate: request.dueDate,
+    };
+    await KeyAssignmentEntity.create(c.env, newAssignment);
+    // Update key status
+    await keyEntity.patch({ status: 'Issued' });
+    // Update request status
+    await requestEntity.patch({ status: 'Approved' });
+    // Create notification
+    const person = await new PersonnelEntity(c.env, request.personnelId).getState();
+    const newNotification: Notification = {
+      id: crypto.randomUUID(),
+      message: `Key request for ${person.name} was approved. Key "${key.keyNumber}" issued.`,
+      timestamp: new Date().toISOString(),
+      read: false,
+    };
+    await NotificationEntity.create(c.env, newNotification);
+    return ok(c, await requestEntity.getState());
+  });
+  app.post('/api/requests/:id/reject', async (c) => {
+    const requestId = c.req.param('id');
+    const requestEntity = new KeyRequestEntity(c.env, requestId);
+    if (!(await requestEntity.exists())) return notFound(c, 'Request not found');
+    const request = await requestEntity.getState();
+    if (request.status !== 'Pending') return bad(c, 'Request is not pending');
+    await requestEntity.patch({ status: 'Rejected' });
+    const person = await new PersonnelEntity(c.env, request.personnelId).getState();
+    const newNotification: Notification = {
+      id: crypto.randomUUID(),
+      message: `Key request for ${person.name} was rejected.`,
+      timestamp: new Date().toISOString(),
+      read: false,
+    };
+    await NotificationEntity.create(c.env, newNotification);
+    return ok(c, await requestEntity.getState());
+  });
 }
