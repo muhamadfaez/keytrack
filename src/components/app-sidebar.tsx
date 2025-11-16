@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, KeyRound, Users, BarChart3, Settings, PanelLeft, PanelRight, Zap, ClipboardCheck, KeySquare } from "lucide-react";
+import { Home, KeyRound, Users, BarChart3, Settings, PanelLeft, PanelRight, Zap, ClipboardCheck, KeySquare, History } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -25,6 +25,7 @@ const navItems = [
   { href: "/users", label: "Users", icon: Users, adminOnly: true },
   { href: "/requests", label: "Key Requests", icon: ClipboardCheck, adminOnly: false },
   { href: "/reports", label: "Reports", icon: BarChart3, adminOnly: true },
+  { href: "/log", label: "Transaction Log", icon: History, adminOnly: true },
   { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];
 const getInitials = (name: string) => {

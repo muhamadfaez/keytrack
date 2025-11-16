@@ -197,6 +197,11 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
     slice(0, 10);
     return ok(c, sorted);
   });
+  app.get('/api/log', async (c) => {
+    const notificationsPage = await NotificationEntity.list(c.env, null, 1000); // Get more for a log
+    const sorted = notificationsPage.items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return ok(c, sorted);
+  });
   app.post('/api/notifications/mark-read', async (c) => {
     const { ids } = await c.req.json<{ids: string[];}>();
     if (!ids || !Array.isArray(ids)) return bad(c, 'Invalid payload');
@@ -298,12 +303,20 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
   });
   app.post('/api/keys/:id/lost', async (c) => {
     const keyId = c.req.param('id');
+    const { userId } = await c.req.json<{ userId?: string }>();
     const key = new KeyEntity(c.env, keyId);
     if (!(await key.exists())) return notFound(c, 'Key not found');
     const assignments = (await KeyAssignmentEntity.list(c.env)).items;
-    const assignmentToClose = assignments
-      .filter((a) => a.keyId === keyId && !a.returnDate)
-      .sort((a, b) => new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime())[0];
+    let assignmentToClose: KeyAssignment | undefined;
+    if (userId) {
+      // User is reporting their own key lost
+      assignmentToClose = assignments.find(a => a.keyId === keyId && a.personnelId === userId && !a.returnDate);
+    } else {
+      // Admin action: find the oldest active assignment
+      assignmentToClose = assignments
+        .filter((a) => a.keyId === keyId && !a.returnDate)
+        .sort((a, b) => new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime())[0];
+    }
     if (assignmentToClose) {
       const assignmentEntity = new KeyAssignmentEntity(c.env, assignmentToClose.id);
       await assignmentEntity.patch({ returnDate: new Date().toISOString() });

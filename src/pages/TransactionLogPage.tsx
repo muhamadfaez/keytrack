@@ -1,4 +1,5 @@
 import { Navigate } from "react-router-dom";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { LogDataTable } from "@/components/log/LogDataTable";
 import { useAuthStore } from "@/stores/authStore";
@@ -8,14 +9,16 @@ export function TransactionLogPage() {
     return <Navigate to="/" replace />;
   }
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="py-8 md:py-10 lg:py-12">
-        <PageHeader
-          title="Transaction Log"
-          subtitle="An audit trail of all system events and notifications."
-        />
-        <LogDataTable />
+    <AppLayout>
+      <div className="max-w-7xl mx-auto px-4 sm-px-6 lg:px-8">
+        <div className="py-8 md:py-10 lg:py-12">
+          <PageHeader
+            title="Transaction Log"
+            subtitle="An audit trail of all system events and notifications."
+          />
+          <LogDataTable />
+        </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

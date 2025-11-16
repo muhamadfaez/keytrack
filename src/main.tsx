@@ -22,6 +22,7 @@ import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { ProfilePage } from './pages/ProfilePage';
 import { KeyRequestsPage } from './pages/KeyRequestsPage';
 import { MyKeysPage } from './pages/MyKeysPage';
+import { TransactionLogPage } from './pages/TransactionLogPage';
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -57,6 +58,10 @@ const router = createBrowserRouter([
       {
         path: "reports",
         element: <ReportsPage />,
+      },
+      {
+        path: "log",
+        element: <TransactionLogPage />,
       },
       {
         path: "settings",

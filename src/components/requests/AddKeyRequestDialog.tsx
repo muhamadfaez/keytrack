@@ -41,6 +41,7 @@ import { cn } from "@/lib/utils";
 import { useApi, useApiMutation } from '@/hooks/useApi';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/stores/authStore';
 const requestSchema = z.object({
   personnelId: z.string().min(1, "User is required"),
   requestedKeyInfo: z.string().min(1, "Key information is required"),
@@ -61,14 +62,17 @@ type AddKeyRequestDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 export function AddKeyRequestDialog({ isOpen, onOpenChange }: AddKeyRequestDialogProps) {
+  const user = useAuthStore((state) => state.user);
+  const isUserView = user?.role !== 'admin';
   const form = useForm<z.infer<typeof requestSchema>>({
     resolver: zodResolver(requestSchema),
     defaultValues: {
+      personnelId: isUserView ? user?.id : undefined,
       assignmentType: "event",
       issueDate: new Date(),
     },
   });
-  const { data: usersData, isLoading: isLoadingUsers } = useApi<{ items: User[] }>(['users']);
+  const { data: usersData, isLoading: isLoadingUsers } = useApi<{ items: User[] }>(['users'], { enabled: !isUserView });
   const createRequestMutation = useApiMutation<KeyRequest, Partial<KeyRequest>>(
     (newRequest) => api('/api/requests', { method: 'POST', body: JSON.stringify(newRequest) }),
     [['requests'], ['notifications']]
@@ -76,6 +80,7 @@ export function AddKeyRequestDialog({ isOpen, onOpenChange }: AddKeyRequestDialo
   const onSubmit = (values: z.infer<typeof requestSchema>) => {
     const submissionData = {
       ...values,
+      personnelId: isUserView ? user!.id : values.personnelId,
       issueDate: values.issueDate.toISOString(),
       dueDate: values.dueDate?.toISOString(),
     };
@@ -96,35 +101,39 @@ export function AddKeyRequestDialog({ isOpen, onOpenChange }: AddKeyRequestDialo
         <DialogHeader>
           <DialogTitle>Submit Key Request</DialogTitle>
           <DialogDescription>
-            Fill out the form to request a key on behalf of a user.
+            {isUserView
+              ? "Fill out the form to request a key for yourself."
+              : "Fill out the form to request a key on behalf of a user."}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-            <FormField
-              control={form.control}
-              name="personnelId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>User</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={isLoadingUsers ? "Loading..." : "Select a user"} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {usersData?.items.map((user) => (
-                        <SelectItem key={user.id} value={user.id}>
-                          {user.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {!isUserView && (
+              <FormField
+                control={form.control}
+                name="personnelId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>User</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={isLoadingUsers ? "Loading..." : "Select a user"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {usersData?.items.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="requestedKeyInfo"
