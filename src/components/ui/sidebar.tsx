@@ -176,13 +176,25 @@ const MenuButton = ({ children }: { children: React.ReactNode }) => {
   const { isCollapsed } = useSidebar();
   let icon: React.ReactNode = null;
   const text: React.ReactNode[] = [];
-  React.Children.forEach(children, (child) => {
-    if (React.isValidElement(child) && !icon) {
-      icon = child;
-    } else {
-      text.push(child);
-    }
-  });
+
+  const processChildren = (nodes: React.ReactNode) => {
+    React.Children.forEach(nodes, (child) => {
+      if (React.isValidElement(child)) {
+        if (!icon && child.type !== React.Fragment) {
+          icon = child;
+        } else if (child.type === React.Fragment) {
+          processChildren(child.props.children);
+        } else {
+          text.push(child);
+        }
+      } else if (typeof child === 'string' || typeof child === 'number') {
+        text.push(child);
+      }
+    });
+  };
+
+  processChildren(children);
+
   return (
     <>
       {icon}
