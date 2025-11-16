@@ -78,9 +78,9 @@ export function AppSidebar(): JSX.Element {
               </CardContent>
             </Card>
           </div>
-          <SidebarSeparator />
-          <div className="flex items-center justify-between w-full">
-            <NavLink to="/profile" className="flex items-center gap-2 rounded-md p-1 -m-1 hover:bg-accent transition-colors flex-1 min-w-0">
+          <SidebarSeparator className="group-data-[state=collapsed]:hidden" />
+          <div className="flex items-center justify-between w-full group-data-[state=collapsed]:justify-center">
+            <NavLink to="/profile" className="flex items-center gap-2 rounded-md p-1 -m-1 hover:bg-accent transition-colors flex-1 min-w-0 group-data-[state=collapsed]:hidden">
               <Avatar className="h-8 w-8">
                 <AvatarImage src="/placeholder-user.jpg" alt="User avatar" />
                 <AvatarFallback>
