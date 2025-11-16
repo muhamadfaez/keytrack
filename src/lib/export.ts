@@ -19,7 +19,7 @@ const addHeaderAndFooter = (doc: jsPDF, title: string) => {
     doc.setFontSize(16);
     doc.setTextColor(40);
     doc.setFont('helvetica', 'bold');
-    doc.text('Keystone Access - Reports', pageWidth / 2, 15, { align: 'center' });
+    doc.text('KeyTrack - Reports', pageWidth / 2, 15, { align: 'center' });
     doc.setFontSize(12);
     doc.setTextColor(100);
     doc.setFont('helvetica', 'normal');
@@ -75,7 +75,7 @@ export const exportToPdf = (reportData: ReportSummary) => {
     });
   }
   addHeaderAndFooter(doc, title);
-  doc.save(`Keystone_Access_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+  doc.save(`KeyTrack_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
 };
 export const exportToExcel = (reportData: ReportSummary) => {
   const wb = utils.book_new();
@@ -102,5 +102,5 @@ export const exportToExcel = (reportData: ReportSummary) => {
     );
     utils.book_append_sheet(wb, wsOverdue, 'Overdue Keys');
   }
-  writeFile(wb, `Keystone_Access_Report_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+  writeFile(wb, `KeyTrack_Report_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
 };

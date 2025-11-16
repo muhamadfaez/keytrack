@@ -45,7 +45,7 @@ export const useSettingsStore = create<SettingsState>()(
         })),
     }),
     {
-      name: 'keystone-settings-storage',
+      name: 'keytrack-settings-storage',
       storage: createJSONStorage(() => localStorage),
     }
   )

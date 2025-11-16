@@ -45,7 +45,7 @@ export function AppSidebar(): JSX.Element {
       <SidebarHeader>
         <div className="flex items-center gap-2.5">
           <HorizonLogo className="h-8 w-8" />
-          <span className="text-lg font-semibold font-display tracking-tight group-data-[state=collapsed]:hidden">Keystone</span>
+          <span className="text-lg font-semibold font-display tracking-tight group-data-[state=collapsed]:hidden">KeyTrack</span>
         </div>
       </SidebarHeader>
       <SidebarContent>

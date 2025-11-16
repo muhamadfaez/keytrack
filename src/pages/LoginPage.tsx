@@ -56,7 +56,7 @@ export function LoginPage() {
           <Lock className="h-7 w-7" />
         </div>
         <h1 className="text-3xl font-bold font-display tracking-tight">
-          Keystone Access
+          KeyTrack
         </h1>
       </div>
       <Card className="w-full max-w-sm mt-8 z-10 animate-fade-in">
