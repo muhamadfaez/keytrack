@@ -90,5 +90,12 @@ export class UserEntity extends IndexedEntity<User> {
       password: "password",
       role: "admin",
     },
+    {
+      id: "iium-admin-seed",
+      name: "Muhamad Faez",
+      email: "muhamadfaez@iium.edu.my",
+      password: "password",
+      role: "admin",
+    },
   ];
 }
