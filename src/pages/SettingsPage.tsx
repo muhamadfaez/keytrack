@@ -13,6 +13,7 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { LogoSettings } from '@/components/settings/LogoSettings';
+import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
 export function SettingsPage() {
   const [isResetDialogOpen, setResetDialogOpen] = useState(false);
   const enableGoogleAuth = useSettingsStore((state) => state.auth.enableGoogleAuth);
@@ -46,6 +47,7 @@ export function SettingsPage() {
               subtitle="Manage application settings and preferences."
             />
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              <AppearanceSettings />
               <LogoSettings />
               <NotificationSettings />
               <Card>
