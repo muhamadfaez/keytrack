@@ -39,17 +39,17 @@ export function AppSidebar(): JSX.Element {
       <Sidebar.Content>
         <Sidebar.Menu>
           {filteredNavItems.map((item) => (
-            <NavLink to={item.href} key={item.href} className="block">
-              <Sidebar.MenuItem
-                isActive={location.pathname === item.href}
-                tooltip={item.label}
-              >
-                <Sidebar.MenuButton>
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.label}</span>
-                </Sidebar.MenuButton>
-              </Sidebar.MenuItem>
-            </NavLink>
+            <Sidebar.MenuItem
+              key={item.href}
+              to={item.href}
+              end={item.href === '/'}
+              tooltip={item.label}
+            >
+              <Sidebar.MenuButton>
+                <item.icon className="h-5 w-5" />
+                <span>{item.label}</span>
+              </Sidebar.MenuButton>
+            </Sidebar.MenuItem>
           ))}
         </Sidebar.Menu>
       </Sidebar.Content>

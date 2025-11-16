@@ -1,4 +1,5 @@
 import * as React from "react";
+import { NavLink, type NavLinkProps } from "react-router-dom";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Menu as MenuIcon } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -25,17 +26,17 @@ export const useSidebar = () => {
 const SIDEBAR_COOKIE_NAME = "sidebar-collapsed";
 export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isMobile = useIsMobile();
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
-  const [isMobileOpen, setIsMobileOpen] = React.useState(false);
-  React.useEffect(() => {
+  const [isCollapsed, setIsCollapsed] = React.useState(() => {
+    if (typeof document === "undefined") {
+      return false;
+    }
     const storedValue = document.cookie
       .split('; ')
       .find(row => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`))
       ?.split('=')[1];
-    if (storedValue) {
-      setIsCollapsed(storedValue === 'true');
-    }
-  }, []);
+    return storedValue === 'true';
+  });
+  const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const toggleCollapse = () => {
     setIsCollapsed(prev => {
       const newState = !prev;
@@ -127,31 +128,36 @@ const menuItemVariants = cva(
         true: "h-10 w-10 justify-center",
         false: "h-10 px-4 py-2",
       },
-      isActive: {
-        true: "bg-sidebar-active text-sidebar-active-foreground font-semibold hover:bg-sidebar-active/90 hover:text-sidebar-active-foreground",
-        false: "",
       },
     },
     defaultVariants: {
       isCollapsed: false,
-      isActive: false,
     },
   }
 );
-interface MenuItemProps extends React.ComponentProps<"li">, Omit<VariantProps<typeof menuItemVariants>, 'isCollapsed'> {
+interface MenuItemProps extends NavLinkProps {
   tooltip?: string;
   children: React.ReactNode;
 }
 const MenuItem = React.forwardRef<HTMLLIElement, MenuItemProps>(
-  ({ className, isActive, tooltip, children, ...props }, ref) => {
+  ({ className, tooltip, children, ...props }, ref) => {
     const { isCollapsed } = useSidebar();
     const link = (
-      <div className={cn(menuItemVariants({ isCollapsed, isActive }), className)}>
+      <NavLink
+        {...props}
+        className={({ isActive }) =>
+          cn(
+            menuItemVariants({ isCollapsed }),
+            isActive && "bg-sidebar-active text-sidebar-active-foreground font-semibold hover:bg-sidebar-active/90 hover:text-sidebar-active-foreground",
+            className
+          )
+        }
+      >
         {children}
-      </div>
+      </NavLink>
     );
     return (
-      <li ref={ref} {...props}>
+      <li ref={ref}>
         {isCollapsed && tooltip ? (
           <Tooltip>
             <TooltipTrigger asChild>{link}</TooltipTrigger>
@@ -169,12 +175,15 @@ const MenuItem = React.forwardRef<HTMLLIElement, MenuItemProps>(
 MenuItem.displayName = "MenuItem";
 const MenuButton = ({ children }: { children: React.ReactNode }) => {
   const { isCollapsed } = useSidebar();
-  const icon = React.Children.toArray(children).find(
-    (child) => React.isValidElement(child) && child.props.className?.includes("lucide")
-  );
-  const text = React.Children.toArray(children).find(
-    (child) => typeof child === "string" || (React.isValidElement(child) && child.type === "span")
-  );
+  let icon: React.ReactNode = null;
+  const text: React.ReactNode[] = [];
+  React.Children.forEach(children, (child) => {
+    if (React.isValidElement(child) && !icon) {
+      icon = child;
+    } else {
+      text.push(child);
+    }
+  });
   return (
     <>
       {icon}
