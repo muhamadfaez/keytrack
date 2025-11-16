@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, KeyRound, Users, BarChart3, Settings, PanelLeft, PanelRight, Zap, ClipboardCheck } from "lucide-react";
+import { Home, KeyRound, Users, BarChart3, Settings, PanelLeft, PanelRight, Zap, ClipboardCheck, KeySquare } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -20,7 +20,8 @@ import { AppLogo } from "./layout/AppLogo";
 import { useAuthStore } from "@/stores/authStore";
 const navItems = [
   { href: "/", label: "Dashboard", icon: Home, adminOnly: false },
-  { href: "/keys", label: "Key Inventory", icon: KeyRound, adminOnly: false },
+  { href: "/keys", label: "Key Inventory", icon: KeyRound, adminOnly: true },
+  { href: "/my-keys", label: "My Keys", icon: KeySquare, adminOnly: false },
   { href: "/users", label: "Users", icon: Users, adminOnly: true },
   { href: "/requests", label: "Key Requests", icon: ClipboardCheck, adminOnly: false },
   { href: "/reports", label: "Reports", icon: BarChart3, adminOnly: true },

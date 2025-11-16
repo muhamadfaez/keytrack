@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { KeyRound, Users, AlertTriangle, CheckCircle } from "lucide-react";
-import { Key, PopulatedAssignment } from "@shared/types";
+import { PopulatedAssignment } from "@shared/types";
 import { format } from "date-fns";
 import { useApi } from "@/hooks/useApi";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuthStore } from "@/stores/authStore";
 type DashboardStats = {
   totalKeys: number;
   keysIssued: number;
@@ -16,15 +17,23 @@ type DashboardStats = {
   overdueKeys: number;
 };
 export function HomePage() {
-  const { data: stats, isLoading: isLoadingStats } = useApi<DashboardStats>(['stats']);
-  const { data: recentAssignments, isLoading: isLoadingAssignments } = useApi<PopulatedAssignment[]>(['assignments', 'recent']);
+  const user = useAuthStore((state) => state.user);
+  const isUserView = user?.role !== 'admin';
+  const statsPath = isUserView ? `stats?userId=${user?.id}` : 'stats';
+  const recentAssignmentsPath = isUserView ? `assignments/recent?userId=${user?.id}` : 'assignments/recent';
+  const { data: stats, isLoading: isLoadingStats } = useApi<DashboardStats>([statsPath]);
+  const { data: recentAssignments, isLoading: isLoadingAssignments } = useApi<PopulatedAssignment[]>([recentAssignmentsPath]);
+  const pageTitle = isUserView ? "My Dashboard" : "Dashboard";
+  const pageSubtitle = isUserView
+    ? "Here's an overview of your assigned keys."
+    : "Welcome back! Here's a quick overview of your key management system.";
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-8 md:py-10 lg:py-12">
           <PageHeader
-            title="Dashboard"
-            subtitle="Welcome back! Here's a quick overview of your key management system."
+            title={pageTitle}
+            subtitle={pageSubtitle}
           />
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {isLoadingStats || !stats ? (
@@ -37,28 +46,30 @@ export function HomePage() {
             ) : (
               <>
                 <StatCard
-                  title="Total Keys"
+                  title={isUserView ? "Keys Held" : "Total Keys"}
                   value={(stats.totalKeys ?? 0).toLocaleString()}
                   icon={<KeyRound className="h-6 w-6 text-muted-foreground" />}
-                  description="Total number of keys in inventory"
+                  description={isUserView ? "Total keys currently assigned to you" : "Total number of keys in inventory"}
                 />
                 <StatCard
-                  title="Keys Issued"
+                  title={isUserView ? "Keys Issued" : "Keys Issued"}
                   value={(stats.keysIssued ?? 0).toLocaleString()}
                   icon={<Users className="h-6 w-6 text-muted-foreground" />}
-                  description={(stats.totalKeys ?? 0) > 0 ? `${(((stats.keysIssued ?? 0) / (stats.totalKeys ?? 0)) * 100).toFixed(1)}% of total keys` : "N/A"}
+                  description={isUserView ? "Total keys assigned to you" : (stats.totalKeys ?? 0) > 0 ? `${(((stats.keysIssued ?? 0) / (stats.totalKeys ?? 0)) * 100).toFixed(1)}% of total keys` : "N/A"}
                 />
-                <StatCard
-                  title="Keys Available"
-                  value={(stats.keysAvailable ?? 0).toLocaleString()}
-                  icon={<CheckCircle className="h-6 w-6 text-muted-foreground" />}
-                  description="Keys ready for assignment"
-                />
+                {!isUserView && (
+                  <StatCard
+                    title="Keys Available"
+                    value={(stats.keysAvailable ?? 0).toLocaleString()}
+                    icon={<CheckCircle className="h-6 w-6 text-muted-foreground" />}
+                    description="Keys ready for assignment"
+                  />
+                )}
                 <StatCard
                   title="Overdue Keys"
                   value={(stats.overdueKeys ?? 0).toLocaleString()}
                   icon={<AlertTriangle className="h-6 w-6 text-red-500" />}
-                  description="Require immediate attention"
+                  description={isUserView ? "Your keys that are overdue" : "Require immediate attention"}
                   variant="destructive"
                 />
               </>

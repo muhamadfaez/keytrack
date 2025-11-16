@@ -21,6 +21,7 @@ import { LoginPage } from './pages/LoginPage';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { ProfilePage } from './pages/ProfilePage';
 import { KeyRequestsPage } from './pages/KeyRequestsPage';
+import { MyKeysPage } from './pages/MyKeysPage';
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -40,6 +41,10 @@ const router = createBrowserRouter([
       {
         path: "keys",
         element: <KeyInventoryPage />,
+      },
+      {
+        path: "my-keys",
+        element: <MyKeysPage />,
       },
       {
         path: "users",

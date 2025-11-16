@@ -77,8 +77,21 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
   });
   app.get('/api/stats', async (c) => {
     await checkAndUpdateOverdueKeys(c.env);
-    const allKeys = (await KeyEntity.list(c.env)).items;
+    const userId = c.req.query('userId');
     const allAssignments = (await KeyAssignmentEntity.list(c.env)).items;
+    if (userId) {
+      const userAssignments = allAssignments.filter(a => a.personnelId === userId);
+      const activeAssignments = userAssignments.filter(a => !a.returnDate);
+      const overdueKeys = activeAssignments.filter(a => getAssignmentStatus(a) === 'Overdue').length;
+      return ok(c, {
+        totalKeys: activeAssignments.length, // Total keys held by user
+        keysIssued: activeAssignments.length,
+        keysAvailable: 0, // Not applicable for user view
+        overdueKeys: overdueKeys,
+      });
+    }
+    // Admin view
+    const allKeys = (await KeyEntity.list(c.env)).items;
     const totalKeys = allKeys.reduce((sum, key) => sum + key.totalQuantity, 0);
     const keysAvailable = allKeys.reduce((sum, key) => sum + key.availableQuantity, 0);
     const overdueKeys = allAssignments.filter(a => getAssignmentStatus(a) === 'Overdue').length;
@@ -90,8 +103,13 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
     });
   });
   app.get('/api/assignments/recent', async (c) => {
+    const userId = c.req.query('userId');
     const assignmentsPage = await KeyAssignmentEntity.list(c.env);
-    const assignments = assignmentsPage.items.sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()).slice(0, 5);
+    let relevantAssignments = assignmentsPage.items;
+    if (userId) {
+      relevantAssignments = assignmentsPage.items.filter(a => a.personnelId === userId);
+    }
+    const assignments = relevantAssignments.sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()).slice(0, 5);
     const populatedAssignments = await Promise.all(
       assignments.map(async (assignment) => {
         const key = await new KeyEntity(c.env, assignment.keyId).getState();
