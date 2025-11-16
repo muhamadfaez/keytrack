@@ -128,7 +128,6 @@ const menuItemVariants = cva(
         true: "h-10 w-10 justify-center",
         false: "h-10 px-4 py-2",
       },
-      },
     },
     defaultVariants: {
       isCollapsed: false,
