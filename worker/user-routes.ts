@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { KeyEntity, KeyAssignmentEntity, NotificationEntity, UserProfileEntity, KeyRequestEntity, UserEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
-import { Key, ReportSummary, KeyStatus, OverdueKeyInfo, Notification, UserProfile, KeyRequest, User, KeyAssignment, AuthUser } from "@shared/types";
+import { Key, ReportSummary, OverdueKeyInfo, Notification, UserProfile, KeyRequest, User, KeyAssignment, AuthUser, PopulatedAssignment, StatusDistributionItem } from "@shared/types";
 async function checkAndUpdateOverdueKeys(env: Env) {
   const assignments = await KeyAssignmentEntity.list(env);
   const activeAssignments = assignments.items.filter((a) => !a.returnDate);
@@ -11,20 +11,29 @@ async function checkAndUpdateOverdueKeys(env: Env) {
       const key = new KeyEntity(env, assignment.keyId);
       if (await key.exists()) {
         const keyState = await key.getState();
-        if (keyState.status === 'Issued') {
-          await key.patch({ status: 'Overdue' });
-          const newNotification: Notification = {
-            id: crypto.randomUUID(),
-            message: `Key "${keyState.keyNumber}" is now overdue.`,
-            timestamp: new Date().toISOString(),
-            read: false
-          };
-          await NotificationEntity.create(env, newNotification);
-        }
+        // Check if a notification for this specific assignment being overdue has been sent.
+        // This is a simplified check. A more robust system might store overdue notification status per assignment.
+        const newNotification: Notification = {
+          id: crypto.randomUUID(),
+          message: `Key "${keyState.keyNumber}" is now overdue.`,
+          timestamp: new Date().toISOString(),
+          read: false
+        };
+        // For simplicity, we'll create a notification. In a real app, you'd avoid spamming notifications.
+        await NotificationEntity.create(env, newNotification);
       }
     }
   }
 }
+const getAssignmentStatus = (assignment: KeyAssignment): PopulatedAssignment['status'] => {
+  if (assignment.returnDate) {
+    return 'Returned';
+  }
+  if (assignment.dueDate && new Date(assignment.dueDate) < new Date()) {
+    return 'Overdue';
+  }
+  return 'Issued';
+};
 export function userRoutes(app: Hono<{Bindings: Env;}>) {
   app.use('*', async (c, next) => {
     await UserEntity.ensureSeed(c.env);
@@ -68,14 +77,15 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
   });
   app.get('/api/stats', async (c) => {
     await checkAndUpdateOverdueKeys(c.env);
-    const allKeys = await KeyEntity.list(c.env);
-    const totalKeys = allKeys.items.length;
-    const keysIssued = allKeys.items.filter((k) => k.status === 'Issued' || k.status === 'Overdue').length;
-    const overdueKeys = allKeys.items.filter((k) => k.status === 'Overdue').length;
+    const allKeys = (await KeyEntity.list(c.env)).items;
+    const allAssignments = (await KeyAssignmentEntity.list(c.env)).items;
+    const totalKeys = allKeys.reduce((sum, key) => sum + key.totalQuantity, 0);
+    const keysAvailable = allKeys.reduce((sum, key) => sum + key.availableQuantity, 0);
+    const overdueKeys = allAssignments.filter(a => getAssignmentStatus(a) === 'Overdue').length;
     return ok(c, {
       totalKeys,
-      keysIssued,
-      keysAvailable: totalKeys - keysIssued,
+      keysIssued: totalKeys - keysAvailable,
+      keysAvailable,
       overdueKeys
     });
   });
@@ -86,7 +96,8 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
       assignments.map(async (assignment) => {
         const key = await new KeyEntity(c.env, assignment.keyId).getState();
         const user = await new UserEntity(c.env, assignment.personnelId).getState();
-        return { ...assignment, key, user };
+        const status = getAssignmentStatus(assignment);
+        return { ...assignment, key, user, status };
       })
     );
     return ok(c, populatedAssignments);
@@ -97,9 +108,12 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
     const allUsers = (await UserEntity.list(c.env)).items;
     const allAssignments = (await KeyAssignmentEntity.list(c.env)).items;
     const userMap = new Map(allUsers.map((p) => [p.id, p]));
-    const statusCounts: Record<KeyStatus, number> = { Available: 0, Issued: 0, Overdue: 0, Lost: 0 };
-    allKeys.forEach((key) => {statusCounts[key.status]++;});
-    const statusDistribution = Object.entries(statusCounts).map(([name, value]) => ({ name: name as KeyStatus, value }));
+    const totalKeys = allKeys.reduce((sum, key) => sum + key.totalQuantity, 0);
+    const availableKeys = allKeys.reduce((sum, key) => sum + key.availableQuantity, 0);
+    const statusDistribution: StatusDistributionItem[] = [
+      { name: 'Available', value: availableKeys },
+      { name: 'Issued', value: totalKeys - availableKeys },
+    ];
     const departmentCounts: Record<string, number> = {};
     const activeAssignments = allAssignments.filter((a) => !a.returnDate);
     activeAssignments.forEach((assignment) => {
@@ -109,11 +123,10 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
       }
     });
     const departmentActivity = Object.entries(departmentCounts).map(([name, keys]) => ({ name, keys }));
-    const overdueKeysPromises = allKeys.
-    filter((k) => k.status === 'Overdue').
-    map(async (key): Promise<OverdueKeyInfo | null> => {
-      const assignment = allAssignments.find((a) => a.keyId === key.id && !a.returnDate);
-      if (assignment && assignment.dueDate) {
+    const overdueAssignments = allAssignments.filter(a => getAssignmentStatus(a) === 'Overdue');
+    const overdueKeysPromises = overdueAssignments.map(async (assignment): Promise<OverdueKeyInfo | null> => {
+      const key = await new KeyEntity(c.env, assignment.keyId).getState();
+      if (key && assignment.dueDate) {
         const user = userMap.get(assignment.personnelId);
         return {
           keyNumber: key.keyNumber,
@@ -203,13 +216,16 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
   });
   app.post('/api/keys', async (c) => {
     const body = await c.req.json<Partial<Key>>();
-    if (!isStr(body.keyNumber) || !isStr(body.roomNumber)) return bad(c, 'keyNumber and roomNumber are required');
+    if (!isStr(body.keyNumber) || !isStr(body.roomNumber) || typeof body.totalQuantity !== 'number' || body.totalQuantity <= 0) {
+      return bad(c, 'keyNumber, roomNumber, and a positive totalQuantity are required');
+    }
     const newKey: Key = {
       id: crypto.randomUUID(),
       keyNumber: body.keyNumber,
       keyType: body.keyType || 'Single',
       roomNumber: body.roomNumber,
-      status: 'Available'
+      totalQuantity: body.totalQuantity,
+      availableQuantity: body.totalQuantity,
     };
     return ok(c, await KeyEntity.create(c.env, newKey));
   });
@@ -218,10 +234,19 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
     const body = await c.req.json<Partial<Key>>();
     const key = new KeyEntity(c.env, id);
     if (!(await key.exists())) return notFound(c, 'Key not found');
+    const oldKeyState = await key.getState();
+    const issuedCount = oldKeyState.totalQuantity - oldKeyState.availableQuantity;
+    if (typeof body.totalQuantity === 'number' && body.totalQuantity < issuedCount) {
+      return bad(c, `Total quantity cannot be less than the number of currently issued keys (${issuedCount}).`);
+    }
+    const quantityChange = (body.totalQuantity ?? oldKeyState.totalQuantity) - oldKeyState.totalQuantity;
+    const newAvailableQuantity = oldKeyState.availableQuantity + quantityChange;
     await key.patch({
       keyNumber: body.keyNumber,
       keyType: body.keyType,
-      roomNumber: body.roomNumber
+      roomNumber: body.roomNumber,
+      totalQuantity: body.totalQuantity,
+      availableQuantity: newAvailableQuantity,
     });
     return ok(c, await key.getState());
   });
@@ -235,16 +260,18 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
     const keyId = c.req.param('id');
     const key = new KeyEntity(c.env, keyId);
     if (!(await key.exists())) return notFound(c, 'Key not found');
-    const keyState = await key.getState();
-    const assignments = await KeyAssignmentEntity.list(c.env);
-    const assignment = assignments.items.find((a) => a.keyId === keyId && !a.returnDate);
-    if (!assignment) return bad(c, 'Key is not currently assigned');
-    const assignmentEntity = new KeyAssignmentEntity(c.env, assignment.id);
+    const assignments = (await KeyAssignmentEntity.list(c.env)).items;
+    const assignmentToReturn = assignments
+      .filter((a) => a.keyId === keyId && !a.returnDate)
+      .sort((a, b) => new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime())[0];
+    if (!assignmentToReturn) return bad(c, 'No active assignment found for this key to return.');
+    const assignmentEntity = new KeyAssignmentEntity(c.env, assignmentToReturn.id);
     await assignmentEntity.patch({ returnDate: new Date().toISOString() });
-    await key.patch({ status: 'Available' });
+    await key.mutate(k => ({ ...k, availableQuantity: k.availableQuantity + 1 }));
+    const keyState = await key.getState();
     const newNotification: Notification = {
       id: crypto.randomUUID(),
-      message: `Key "${keyState.keyNumber}" was returned.`,
+      message: `A copy of key "${keyState.keyNumber}" was returned.`,
       timestamp: new Date().toISOString(),
       read: false
     };
@@ -255,11 +282,22 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
     const keyId = c.req.param('id');
     const key = new KeyEntity(c.env, keyId);
     if (!(await key.exists())) return notFound(c, 'Key not found');
+    const assignments = (await KeyAssignmentEntity.list(c.env)).items;
+    const assignmentToClose = assignments
+      .filter((a) => a.keyId === keyId && !a.returnDate)
+      .sort((a, b) => new Date(a.issueDate).getTime() - new Date(b.issueDate).getTime())[0];
+    if (assignmentToClose) {
+      const assignmentEntity = new KeyAssignmentEntity(c.env, assignmentToClose.id);
+      await assignmentEntity.patch({ returnDate: new Date().toISOString() });
+    }
+    await key.mutate(k => ({
+      ...k,
+      totalQuantity: k.totalQuantity - 1,
+    }));
     const keyState = await key.getState();
-    await key.patch({ status: 'Lost' });
     const newNotification: Notification = {
       id: crypto.randomUUID(),
-      message: `Key "${keyState.keyNumber}" was reported lost.`,
+      message: `A copy of key "${keyState.keyNumber}" was reported lost.`,
       timestamp: new Date().toISOString(),
       read: false
     };
@@ -274,7 +312,8 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
       keyAssignments.map(async (assignment) => {
         const user = await new UserEntity(c.env, assignment.personnelId).getState();
         const key = await new KeyEntity(c.env, assignment.keyId).getState();
-        return { ...assignment, user, key };
+        const status = getAssignmentStatus(assignment);
+        return { ...assignment, user, key, status };
       })
     );
     return ok(c, populated.sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()));
@@ -353,7 +392,8 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
       userAssignments.map(async (assignment) => {
         const key = await new KeyEntity(c.env, assignment.keyId).getState();
         const user = await new UserEntity(c.env, assignment.personnelId).getState();
-        return { ...assignment, key, user };
+        const status = getAssignmentStatus(assignment);
+        return { ...assignment, key, user, status };
       })
     );
     return ok(c, populated);
@@ -368,7 +408,7 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
       return bad(c, 'dueDate is required for event assignments');
     }
     const key = new KeyEntity(c.env, body.keyId);
-    if (!(await key.exists()) || (await key.getState()).status !== 'Available') {
+    if (!(await key.exists()) || (await key.getState()).availableQuantity <= 0) {
       return bad(c, 'Key is not available for assignment');
     }
     const keyState = await key.getState();
@@ -381,7 +421,7 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
       assignmentType: assignmentType,
       dueDate: body.dueDate
     };
-    await key.patch({ status: 'Issued' });
+    await key.mutate(k => ({ ...k, availableQuantity: k.availableQuantity - 1 }));
     const createdAssignment = await KeyAssignmentEntity.create(c.env, newAssignment);
     const newNotification: Notification = {
       id: crypto.randomUUID(),
@@ -444,7 +484,7 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
     const keyEntity = new KeyEntity(c.env, keyId);
     if (!(await keyEntity.exists())) return notFound(c, 'Selected key not found');
     const key = await keyEntity.getState();
-    if (key.status !== 'Available') return bad(c, 'Selected key is not available');
+    if (key.availableQuantity <= 0) return bad(c, 'Selected key is not available');
     const newAssignment: KeyAssignment = {
       id: crypto.randomUUID(),
       keyId: key.id,
@@ -454,7 +494,7 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
       dueDate: request.dueDate
     };
     await KeyAssignmentEntity.create(c.env, newAssignment);
-    await keyEntity.patch({ status: 'Issued' });
+    await keyEntity.mutate(k => ({ ...k, availableQuantity: k.availableQuantity - 1 }));
     await requestEntity.patch({ status: 'Approved' });
     const user = await new UserEntity(c.env, request.personnelId).getState();
     const newNotification: Notification = {

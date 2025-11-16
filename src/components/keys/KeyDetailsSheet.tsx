@@ -12,14 +12,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Key, PopulatedAssignment } from "@shared/types";
 import { useApi } from '@/hooks/useApi';
 import { format } from 'date-fns';
-import { User, Clock, Calendar, Hash, KeyRound, MapPin, History, CaseSensitive } from 'lucide-react';
+import { User, Clock, Calendar, Hash, KeyRound, MapPin, History, CaseSensitive, CheckCircle, Package } from 'lucide-react';
 import { EmptyState } from '../layout/EmptyState';
 type KeyDetailsSheetProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   keyData: Key | null;
 };
-const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) => (
+const DetailItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string | number }) => (
   <div className="flex items-start text-sm">
     <div className="text-muted-foreground mr-3 mt-0.5">{icon}</div>
     <div className="flex flex-col">
@@ -99,13 +99,8 @@ export function KeyDetailsSheet({ isOpen, onOpenChange, keyData }: KeyDetailsShe
                 <DetailItem icon={<Hash size={16} />} label="Key Number" value={keyData.keyNumber} />
                 <DetailItem icon={<KeyRound size={16} />} label="Type" value={keyData.keyType} />
                 <DetailItem icon={<MapPin size={16} />} label="Room/Area" value={keyData.roomNumber} />
-                <div className="flex items-start text-sm">
-                  <div className="text-muted-foreground mr-3 mt-0.5"><Clock size={16} /></div>
-                  <div className="flex flex-col">
-                    <span className="font-medium text-muted-foreground">Status</span>
-                    <Badge variant={keyData.status === 'Overdue' || keyData.status === 'Lost' ? 'destructive' : 'secondary'}>{keyData.status}</Badge>
-                  </div>
-                </div>
+                <DetailItem icon={<CheckCircle size={16} />} label="Available" value={keyData.availableQuantity} />
+                <DetailItem icon={<Package size={16} />} label="Total" value={keyData.totalQuantity} />
               </div>
             </div>
             <Separator />

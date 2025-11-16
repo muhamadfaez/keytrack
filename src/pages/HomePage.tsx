@@ -97,8 +97,8 @@ export function HomePage() {
                             {assignment.dueDate ? format(new Date(assignment.dueDate), "MMM dd, yyyy") : 'N/A'}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={assignment.key.status === 'Overdue' ? 'destructive' : 'secondary'}>
-                              {assignment.key.status}
+                            <Badge variant={assignment.status === 'Overdue' ? 'destructive' : 'secondary'}>
+                              {assignment.status}
                             </Badge>
                           </TableCell>
                         </TableRow>

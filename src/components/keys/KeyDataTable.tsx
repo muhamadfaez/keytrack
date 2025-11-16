@@ -18,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge, BadgeProps } from "@/components/ui/badge";
 import { MoreHorizontal, ArrowUpDown, ArrowUp, ArrowDown, Inbox } from "lucide-react";
-import { Key, KeyStatus } from "@shared/types";
+import { Key } from "@shared/types";
 import { IssueKeyDialog } from './IssueKeyDialog';
 import { EditKeyDialog } from './EditKeyDialog';
 import { DeleteDialog } from './DeleteDialog';
@@ -32,14 +32,11 @@ import { EmptyState } from '../layout/EmptyState';
 import { useAuthStore } from '@/stores/authStore';
 type SortableKey = keyof Key;
 type SortDirection = 'ascending' | 'descending';
-const StatusBadge = ({ status }: { status: KeyStatus }) => {
-  const variantMap: Record<KeyStatus, BadgeProps["variant"]> = {
-    Available: "secondary",
-    Issued: "default",
-    Overdue: "destructive",
-    Lost: "destructive",
-  };
-  return <Badge variant={variantMap[status]}>{status}</Badge>;
+const StatusBadge = ({ available, total }: { available: number, total: number }) => {
+  const isAvailable = available > 0;
+  const variant: BadgeProps["variant"] = isAvailable ? "secondary" : "default";
+  const text = isAvailable ? "Available" : "Fully Issued";
+  return <Badge variant={variant}>{text}</Badge>;
 };
 type KeyDataTableProps = {
   statusFilter: string;
@@ -76,7 +73,8 @@ export function KeyDataTable({ statusFilter, typeFilter, searchTerm }: KeyDataTa
   const filteredKeys = useMemo(() => {
     if (!sortedKeys) return [];
     return sortedKeys.filter(key => {
-      const statusMatch = statusFilter === 'all' || key.status === statusFilter;
+      const getStatus = (k: Key) => k.availableQuantity > 0 ? 'Available' : 'Issued';
+      const statusMatch = statusFilter === 'all' || getStatus(key) === statusFilter;
       const typeMatch = typeFilter === 'all' || key.keyType === typeFilter;
       const searchMatch =
         key.keyNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -126,7 +124,7 @@ export function KeyDataTable({ statusFilter, typeFilter, searchTerm }: KeyDataTa
     if (!dialogState.return) return;
     returnMutation.mutate(dialogState.return.id, {
       onSuccess: () => {
-        toast.success(`Key "${dialogState.return?.keyNumber}" has been returned.`);
+        toast.success(`A copy of key "${dialogState.return?.keyNumber}" has been returned.`);
         setDialogState({});
       },
       onError: (err) => {
@@ -138,7 +136,7 @@ export function KeyDataTable({ statusFilter, typeFilter, searchTerm }: KeyDataTa
     if (!dialogState.lost) return;
     lostMutation.mutate(dialogState.lost.id, {
       onSuccess: () => {
-        toast.warning(`Key "${dialogState.lost?.keyNumber}" has been reported as lost.`);
+        toast.warning(`A copy of key "${dialogState.lost?.keyNumber}" has been reported as lost.`);
         setDialogState({});
       },
       onError: (err) => {
@@ -155,14 +153,14 @@ export function KeyDataTable({ statusFilter, typeFilter, searchTerm }: KeyDataTa
     if (isLoading) {
       return Array.from({ length: 5 }).map((_, i) => (
         <TableRow key={i}>
-          <TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell>
+          <TableCell colSpan={7}><Skeleton className="h-8 w-full" /></TableCell>
         </TableRow>
       ));
     }
     if (error) {
       return (
         <TableRow>
-          <TableCell colSpan={5} className="text-center text-destructive">
+          <TableCell colSpan={7} className="text-center text-destructive">
             Error loading keys: {error.message}
           </TableCell>
         </TableRow>
@@ -171,7 +169,7 @@ export function KeyDataTable({ statusFilter, typeFilter, searchTerm }: KeyDataTa
     if (filteredKeys.length === 0) {
       return (
         <TableRow>
-          <TableCell colSpan={5}>
+          <TableCell colSpan={7}>
             <EmptyState
               icon={<Inbox className="h-12 w-12" />}
               title="No Keys Found"
@@ -181,52 +179,57 @@ export function KeyDataTable({ statusFilter, typeFilter, searchTerm }: KeyDataTa
         </TableRow>
       );
     }
-    return filteredKeys.map((key) => (
-      <TableRow key={key.id}>
-        <TableCell className="font-medium">{key.keyNumber}</TableCell>
-        <TableCell>{key.keyType}</TableCell>
-        <TableCell>{key.roomNumber}</TableCell>
-        <TableCell><StatusBadge status={key.status} /></TableCell>
-        <TableCell>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => setDialogState({ details: key })}>
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setDialogState({ issue: key })} disabled={key.status !== 'Available'}>
-                Issue Key
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setDialogState({ return: key })} disabled={key.status === 'Available' || key.status === 'Lost'}>
-                Return Key
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {user?.role === 'admin' && (
-                <>
-                  <DropdownMenuItem onClick={() => setDialogState({ edit: key })}>Edit</DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                    onClick={() => setDialogState({ lost: key })}
-                    disabled={key.status === 'Lost' || key.status === 'Available'}
-                  >
-                    Report Lost
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => setDialogState({ delete: key })}>
-                    Delete
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </TableCell>
-      </TableRow>
-    ));
+    return filteredKeys.map((key) => {
+      const issuedCount = key.totalQuantity - key.availableQuantity;
+      return (
+        <TableRow key={key.id}>
+          <TableCell className="font-medium">{key.keyNumber}</TableCell>
+          <TableCell>{key.keyType}</TableCell>
+          <TableCell>{key.roomNumber}</TableCell>
+          <TableCell className="font-semibold text-center">{key.availableQuantity}</TableCell>
+          <TableCell className="text-center">{key.totalQuantity}</TableCell>
+          <TableCell><StatusBadge available={key.availableQuantity} total={key.totalQuantity} /></TableCell>
+          <TableCell>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => setDialogState({ details: key })}>
+                  View Details
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setDialogState({ issue: key })} disabled={key.availableQuantity <= 0}>
+                  Issue Key
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setDialogState({ return: key })} disabled={issuedCount <= 0}>
+                  Return Key
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {user?.role === 'admin' && (
+                  <>
+                    <DropdownMenuItem onClick={() => setDialogState({ edit: key })}>Edit</DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                      onClick={() => setDialogState({ lost: key })}
+                      disabled={issuedCount <= 0}
+                    >
+                      Report Lost
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => setDialogState({ delete: key })}>
+                      Delete
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </TableCell>
+        </TableRow>
+      )
+    });
   };
   return (
     <>
@@ -251,11 +254,17 @@ export function KeyDataTable({ statusFilter, typeFilter, searchTerm }: KeyDataTa
                       Room/Area {getSortIcon('roomNumber')}
                     </Button>
                   </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" size="sm" onClick={() => requestSort('status')}>
-                      Status {getSortIcon('status')}
+                  <TableHead className="text-center">
+                    <Button variant="ghost" size="sm" onClick={() => requestSort('availableQuantity')}>
+                      Available {getSortIcon('availableQuantity')}
                     </Button>
                   </TableHead>
+                  <TableHead className="text-center">
+                    <Button variant="ghost" size="sm" onClick={() => requestSort('totalQuantity')}>
+                      Total {getSortIcon('totalQuantity')}
+                    </Button>
+                  </TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>

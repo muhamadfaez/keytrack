@@ -9,7 +9,8 @@ export class KeyEntity extends IndexedEntity<Key> {
     keyNumber: "",
     keyType: "Single",
     roomNumber: "",
-    status: "Available",
+    totalQuantity: 1,
+    availableQuantity: 1,
   };
 }
 // KEY ASSIGNMENT ENTITY

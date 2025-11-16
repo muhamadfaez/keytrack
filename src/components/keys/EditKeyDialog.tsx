@@ -31,10 +31,14 @@ import { useApiMutation } from '@/hooks/useApi';
 import { api } from '@/lib/api-client';
 import { Key } from '@shared/types';
 import { toast } from 'sonner';
-const keySchema = z.object({
+const createKeySchema = (issuedCount: number) => z.object({
   keyNumber: z.string().min(1, "Key number is required"),
   keyType: z.enum(["Single", "Master", "Sub-Master"]),
   roomNumber: z.string().min(1, "Room/Area is required"),
+  totalQuantity: z.coerce.number().int().positive("Quantity must be a positive number"),
+}).refine(data => data.totalQuantity >= issuedCount, {
+  message: `Quantity cannot be less than the number of issued keys (${issuedCount}).`,
+  path: ["totalQuantity"],
 });
 type EditKeyDialogProps = {
   isOpen: boolean;
@@ -42,12 +46,15 @@ type EditKeyDialogProps = {
   keyData: Key;
 };
 export function EditKeyDialog({ isOpen, onOpenChange, keyData }: EditKeyDialogProps) {
+  const issuedCount = keyData.totalQuantity - keyData.availableQuantity;
+  const keySchema = createKeySchema(issuedCount);
   const form = useForm<z.infer<typeof keySchema>>({
     resolver: zodResolver(keySchema),
     defaultValues: {
       keyNumber: keyData.keyNumber,
       keyType: keyData.keyType as "Single" | "Master" | "Sub-Master",
       roomNumber: keyData.roomNumber,
+      totalQuantity: keyData.totalQuantity,
     },
   });
   useEffect(() => {
@@ -56,6 +63,7 @@ export function EditKeyDialog({ isOpen, onOpenChange, keyData }: EditKeyDialogPr
         keyNumber: keyData.keyNumber,
         keyType: keyData.keyType as "Single" | "Master" | "Sub-Master",
         roomNumber: keyData.roomNumber,
+        totalQuantity: keyData.totalQuantity,
       });
     }
   }, [keyData, form]);
@@ -128,6 +136,19 @@ export function EditKeyDialog({ isOpen, onOpenChange, keyData }: EditKeyDialogPr
                   <FormLabel>Room / Area</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Room 205, Building A" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="totalQuantity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Total Quantity</FormLabel>
+                  <FormControl>
+                    <Input type="number" min={issuedCount} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

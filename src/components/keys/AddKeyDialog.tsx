@@ -35,6 +35,7 @@ const keySchema = z.object({
   keyNumber: z.string().min(1, "Key number is required"),
   keyType: z.enum(["Single", "Master", "Sub-Master"]),
   roomNumber: z.string().min(1, "Room/Area is required"),
+  totalQuantity: z.coerce.number().int().positive("Quantity must be a positive number"),
 });
 type AddKeyDialogProps = {
   isOpen: boolean;
@@ -47,6 +48,7 @@ export function AddKeyDialog({ isOpen, onOpenChange }: AddKeyDialogProps) {
       keyNumber: "",
       keyType: "Single",
       roomNumber: "",
+      totalQuantity: 1,
     },
   });
   const createKeyMutation = useApiMutation<Key, Partial<Key>>(
@@ -119,6 +121,19 @@ export function AddKeyDialog({ isOpen, onOpenChange }: AddKeyDialogProps) {
                   <FormLabel>Room / Area</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Room 205, Building A" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="totalQuantity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Quantity</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="1" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

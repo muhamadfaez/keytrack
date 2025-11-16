@@ -9,8 +9,8 @@ export interface Key {
   keyNumber: string;
   keyType: string; // e.g., 'Master', 'Sub-Master', 'Single'
   roomNumber: string;
-  status: KeyStatus;
-  currentHolderId?: string;
+  totalQuantity: number;
+  availableQuantity: number;
 }
 export interface KeyAssignment {
   id: string;
@@ -25,6 +25,7 @@ export interface KeyAssignment {
 export type PopulatedAssignment = Omit<KeyAssignment, 'personnelId'> & {
   key: Key;
   user: User;
+  status: 'Issued' | 'Returned' | 'Overdue';
 };
 // Represents a key with its full assignment history.
 export type KeyWithAssignments = Key & {
@@ -65,7 +66,7 @@ export interface User {
 export type AuthUser = Omit<User, 'password'>;
 // --- Reporting Types ---
 export type StatusDistributionItem = {
-  name: KeyStatus;
+  name: 'Available' | 'Issued';
   value: number;
 };
 export type DepartmentActivityItem = {
