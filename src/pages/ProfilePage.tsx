@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -37,6 +37,8 @@ export function ProfilePage() {
     ['users', currentUser?.id],
     { enabled: !!currentUser?.id }
   );
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
@@ -54,6 +56,9 @@ export function ProfilePage() {
   const updateUserMutation = useApiMutation<AuthUser, Partial<AuthUser>>(
     (updatedUser) => api(`/api/users/${currentUser?.id}`, { method: 'PUT', body: JSON.stringify(updatedUser) }),
     [['users', currentUser?.id]]
+  );
+  const changePasswordMutation = useApiMutation<{ message: string }, { currentPassword: string, newPassword: string }>(
+    (passwords) => api(`/api/users/${currentUser?.id}/change-password`, { method: 'POST', body: JSON.stringify(passwords) })
   );
   const onSubmit = (values: z.infer<typeof profileSchema>) => {
     if (!currentUser) return;
@@ -74,7 +79,28 @@ export function ProfilePage() {
   };
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.info("Password changes are not yet implemented.");
+    if (!currentPassword || !newPassword) {
+      toast.error("Please fill in both password fields.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters long.");
+      return;
+    }
+    changePasswordMutation.mutate({ currentPassword, newPassword }, {
+      onSuccess: () => {
+        toast.success("Password Changed Successfully", {
+          description: "Your password has been updated.",
+        });
+        setCurrentPassword('');
+        setNewPassword('');
+      },
+      onError: (err) => {
+        toast.error("Password Change Failed", {
+          description: err.message,
+        });
+      }
+    });
   };
   if (isLoading || !currentUser) {
     return (
@@ -216,15 +242,17 @@ export function ProfilePage() {
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="current-password">Current Password</Label>
-                      <Input id="current-password" type="password" placeholder="••••••••" />
+                      <Input id="current-password" type="password" placeholder="••••••••" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} disabled={changePasswordMutation.isPending} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="new-password">New Password</Label>
-                      <Input id="new-password" type="password" placeholder="••••••••" />
+                      <Input id="new-password" type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} disabled={changePasswordMutation.isPending} />
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button type="submit">Change Password</Button>
+                    <Button type="submit" disabled={changePasswordMutation.isPending}>
+                      {changePasswordMutation.isPending ? "Changing..." : "Change Password"}
+                    </Button>
                   </CardFooter>
                 </form>
               </Card>

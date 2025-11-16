@@ -328,6 +328,23 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
     if (!existed) return notFound(c, 'User not found');
     return ok(c, { id });
   });
+  app.post('/api/users/:id/change-password', async (c) => {
+    const id = c.req.param('id');
+    const { currentPassword, newPassword } = await c.req.json<{ currentPassword?: string; newPassword?: string }>();
+    if (!isStr(currentPassword) || !isStr(newPassword)) {
+      return bad(c, 'Current and new passwords are required');
+    }
+    const user = new UserEntity(c.env, id);
+    if (!(await user.exists())) {
+      return notFound(c, 'User not found');
+    }
+    const userState = await user.getState();
+    if (userState.password !== currentPassword) {
+      return bad(c, 'Incorrect current password');
+    }
+    await user.patch({ password: newPassword });
+    return ok(c, { message: 'Password updated successfully' });
+  });
   app.get('/api/users/:id/keys', async (c) => {
     const userId = c.req.param('id');
     const allAssignments = await KeyAssignmentEntity.list(c.env);
