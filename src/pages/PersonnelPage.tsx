@@ -9,10 +9,12 @@ import { Personnel } from "@shared/types";
 import { useApi } from "@/hooks/useApi";
 import { PersonnelDataTable } from "@/components/personnel/PersonnelDataTable";
 import { AddPersonnelDialog } from "@/components/personnel/AddPersonnelDialog";
+import { useAuthStore } from "@/stores/authStore";
 export function PersonnelPage() {
   const { data: personnelData, isLoading, error } = useApi<{ items: Personnel[] }>(['personnel']);
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const user = useAuthStore((state) => state.user);
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -21,10 +23,12 @@ export function PersonnelPage() {
             title="Personnel"
             subtitle="Manage all faculty, staff, and contractors."
           >
-            <Button onClick={() => setAddDialogOpen(true)}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Personnel
-            </Button>
+            {user?.role === 'admin' && (
+              <Button onClick={() => setAddDialogOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Personnel
+              </Button>
+            )}
           </PageHeader>
           <Card>
             <CardContent className="pt-6">

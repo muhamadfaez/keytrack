@@ -25,6 +25,7 @@ import { useApiMutation } from '@/hooks/useApi';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 import { EmptyState } from '../layout/EmptyState';
+import { useAuthStore } from '@/stores/authStore';
 type SortableKey = keyof Personnel;
 type SortDirection = 'ascending' | 'descending';
 type PersonnelDataTableProps = {
@@ -34,6 +35,7 @@ type PersonnelDataTableProps = {
   searchTerm: string;
 };
 export function PersonnelDataTable({ data, isLoading, error, searchTerm }: PersonnelDataTableProps) {
+  const user = useAuthStore((state) => state.user);
   const [dialogState, setDialogState] = useState<{
     edit?: Personnel;
     delete?: Personnel;
@@ -140,15 +142,19 @@ export function PersonnelDataTable({ data, isLoading, error, searchTerm }: Perso
               <DropdownMenuItem onClick={() => setDialogState({ history: person })}>
                 View Assigned Keys
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setDialogState({ edit: person })}>
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                onClick={() => setDialogState({ delete: person })}
-              >
-                Delete
-              </DropdownMenuItem>
+              {user?.role === 'admin' && (
+                <>
+                  <DropdownMenuItem onClick={() => setDialogState({ edit: person })}>
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                    onClick={() => setDialogState({ delete: person })}
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </TableCell>

@@ -29,6 +29,7 @@ import { api } from '@/lib/api-client';
 import { Skeleton } from '../ui/skeleton';
 import { toast } from 'sonner';
 import { EmptyState } from '../layout/EmptyState';
+import { useAuthStore } from '@/stores/authStore';
 type SortableKey = keyof Key;
 type SortDirection = 'ascending' | 'descending';
 const StatusBadge = ({ status }: { status: KeyStatus }) => {
@@ -47,6 +48,7 @@ type KeyDataTableProps = {
 };
 export function KeyDataTable({ statusFilter, typeFilter, searchTerm }: KeyDataTableProps) {
   const { data: keysData, isLoading, error } = useApi<{ items: Key[] }>(['keys']);
+  const user = useAuthStore((state) => state.user);
   const [sortConfig, setSortConfig] = useState<{ key: SortableKey; direction: SortDirection } | null>(null);
   const [dialogState, setDialogState] = useState<{
     issue?: Key;
@@ -205,17 +207,21 @@ export function KeyDataTable({ statusFilter, typeFilter, searchTerm }: KeyDataTa
                 Return Key
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setDialogState({ edit: key })}>Edit</DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                onClick={() => setDialogState({ lost: key })}
-                disabled={key.status === 'Lost' || key.status === 'Available'}
-              >
-                Report Lost
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => setDialogState({ delete: key })}>
-                Delete
-              </DropdownMenuItem>
+              {user?.role === 'admin' && (
+                <>
+                  <DropdownMenuItem onClick={() => setDialogState({ edit: key })}>Edit</DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                    onClick={() => setDialogState({ lost: key })}
+                    disabled={key.status === 'Lost' || key.status === 'Available'}
+                  >
+                    Report Lost
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => setDialogState({ delete: key })}>
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </TableCell>

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -14,10 +15,12 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { LogoSettings } from '@/components/settings/LogoSettings';
 import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
+import { useAuthStore } from '@/stores/authStore';
 export function SettingsPage() {
   const [isResetDialogOpen, setResetDialogOpen] = useState(false);
   const enableGoogleAuth = useSettingsStore((state) => state.auth.enableGoogleAuth);
   const toggleGoogleAuth = useSettingsStore((state) => state.toggleGoogleAuth);
+  const user = useAuthStore((state) => state.user);
   const resetMutation = useApiMutation<void, void>(
     () => api('/api/settings/reset', { method: 'POST' }),
     [['keys'], ['personnel'], ['assignments'], ['stats'], ['reports', 'summary'], ['assignments', 'recent'], ['notifications'], ['profile']]
@@ -37,6 +40,9 @@ export function SettingsPage() {
       }
     });
   };
+  if (user?.role !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
   return (
     <>
       <AppLayout>

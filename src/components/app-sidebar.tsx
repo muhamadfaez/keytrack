@@ -20,12 +20,12 @@ import { Skeleton } from "./ui/skeleton";
 import { AppLogo } from "./layout/AppLogo";
 import { useAuthStore } from "@/stores/authStore";
 const navItems = [
-  { href: "/", label: "Dashboard", icon: Home },
-  { href: "/keys", label: "Key Inventory", icon: KeyRound },
-  { href: "/personnel", label: "Personnel", icon: Users },
-  { href: "/requests", label: "Key Requests", icon: ClipboardCheck },
-  { href: "/reports", label: "Reports", icon: BarChart3 },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/", label: "Dashboard", icon: Home, adminOnly: false },
+  { href: "/keys", label: "Key Inventory", icon: KeyRound, adminOnly: false },
+  { href: "/personnel", label: "Personnel", icon: Users, adminOnly: false },
+  { href: "/requests", label: "Key Requests", icon: ClipboardCheck, adminOnly: false },
+  { href: "/reports", label: "Reports", icon: BarChart3, adminOnly: false },
+  { href: "/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];
 const getInitials = (name: string) => {
   if (!name) return 'AU';
@@ -41,6 +41,7 @@ export function AppSidebar(): JSX.Element {
   const isCollapsed = state === 'collapsed';
   const isMobile = useIsMobile();
   const user = useAuthStore((state) => state.user);
+  const filteredNavItems = navItems.filter(item => !item.adminOnly || user?.role === 'admin');
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -51,7 +52,7 @@ export function AppSidebar(): JSX.Element {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
@@ -97,7 +98,7 @@ export function AppSidebar(): JSX.Element {
                 ) : (
                   <>
                     <span className="text-sm font-medium truncate">{user.name}</span>
-                    <span className="text-xs text-muted-foreground">{user.role === 'admin' ? 'Administrator' : 'User'}</span>
+                    <span className="text-xs text-muted-foreground capitalize">{user.role}</span>
                   </>
                 )}
               </div>

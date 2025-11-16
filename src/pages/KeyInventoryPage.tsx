@@ -13,11 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuthStore } from "@/stores/authStore";
 export function KeyInventoryPage() {
   const [isAddDialogOpen, setAddDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const user = useAuthStore((state) => state.user);
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -26,10 +28,12 @@ export function KeyInventoryPage() {
             title="Key Inventory"
             subtitle="Manage all keys in the university system."
           >
-            <Button onClick={() => setAddDialogOpen(true)}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add New Key
-            </Button>
+            {user?.role === 'admin' && (
+              <Button onClick={() => setAddDialogOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add New Key
+              </Button>
+            )}
           </PageHeader>
           <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4 mb-4">
             <Input
