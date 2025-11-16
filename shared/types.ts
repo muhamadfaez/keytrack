@@ -59,6 +59,15 @@ export interface UserProfile {
   department: string;
   appLogoBase64?: string | null;
 }
+// --- User Authentication Types ---
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
+  password?: string; // Only on backend
+}
+export type AuthUser = Omit<User, 'password'>;
 // --- Reporting Types ---
 export type StatusDistributionItem = {
   name: KeyStatus;

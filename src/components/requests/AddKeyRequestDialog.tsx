@@ -45,7 +45,9 @@ const requestSchema = z.object({
   personnelId: z.string().min(1, "Personnel is required"),
   requestedKeyInfo: z.string().min(1, "Key information is required"),
   assignmentType: z.enum(["event", "personal"]),
-  issueDate: z.date({ errorMap: () => ({ message: "Issue date is required." }) }),
+  issueDate: z.date({
+    required_error: "Issue date is required.",
+  }),
   dueDate: z.date().optional(),
 }).refine(data => {
   if (data.assignmentType === 'event') {

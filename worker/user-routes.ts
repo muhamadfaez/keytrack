@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { KeyEntity, PersonnelEntity, KeyAssignmentEntity, NotificationEntity, UserProfileEntity, KeyRequestEntity } from "./entities";
+import { KeyEntity, PersonnelEntity, KeyAssignmentEntity, NotificationEntity, UserProfileEntity, KeyRequestEntity, UserEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
-import { Key, Personnel, KeyAssignment, ReportSummary, KeyStatus, OverdueKeyInfo, Notification, UserProfile, KeyRequest } from "@shared/types";
+import { Key, Personnel, KeyAssignment, ReportSummary, KeyStatus, OverdueKeyInfo, Notification, UserProfile, KeyRequest, User } from "@shared/types";
 async function checkAndUpdateOverdueKeys(env: Env) {
   const assignments = await KeyAssignmentEntity.list(env);
   const activeAssignments = assignments.items.filter(a => !a.returnDate);
@@ -27,6 +27,46 @@ async function checkAndUpdateOverdueKeys(env: Env) {
   }
 }
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
+  // Seed default admin user
+  app.use('*', async (c, next) => {
+    await UserEntity.ensureSeed(c.env);
+    await next();
+  });
+  // --- AUTH ---
+  app.post('/api/auth/signup', async (c) => {
+    const body = await c.req.json<Partial<User>>();
+    if (!isStr(body.name) || !isStr(body.email) || !isStr(body.password)) {
+      return bad(c, 'Name, email, and password are required');
+    }
+    const allUsers = (await UserEntity.list(c.env)).items;
+    const existingUser = allUsers.find(u => u.email === body.email);
+    if (existingUser) {
+      return bad(c, 'An account with this email already exists.');
+    }
+    const newUser: User = {
+      id: crypto.randomUUID(),
+      name: body.name,
+      email: body.email,
+      password: body.password, // In a real app, hash this password
+      role: 'user',
+    };
+    const createdUser = await UserEntity.create(c.env, newUser);
+    const { password, ...userResponse } = createdUser;
+    return ok(c, userResponse);
+  });
+  app.post('/api/auth/login', async (c) => {
+    const { email, password } = await c.req.json<{ email?: string; password?: string }>();
+    if (!isStr(email) || !isStr(password)) {
+      return bad(c, 'Email and password are required');
+    }
+    const allUsers = (await UserEntity.list(c.env)).items;
+    const user = allUsers.find(u => u.email === email);
+    if (!user || user.password !== password) { // In a real app, compare hashed passwords
+      return bad(c, 'Invalid credentials');
+    }
+    const { password: _, ...userResponse } = user;
+    return ok(c, userResponse);
+  });
   // --- DASHBOARD ---
   app.get('/api/stats', async (c) => {
     await checkAndUpdateOverdueKeys(c.env);

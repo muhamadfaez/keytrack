@@ -16,10 +16,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { useApi } from "@/hooks/useApi";
-import { UserProfile } from "@shared/types";
 import { Skeleton } from "./ui/skeleton";
 import { AppLogo } from "./layout/AppLogo";
+import { useAuthStore } from "@/stores/authStore";
 const navItems = [
   { href: "/", label: "Dashboard", icon: Home },
   { href: "/keys", label: "Key Inventory", icon: KeyRound },
@@ -29,6 +28,7 @@ const navItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 const getInitials = (name: string) => {
+  if (!name) return 'AU';
   const names = name.split(' ');
   if (names.length > 1) {
     return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
@@ -40,7 +40,7 @@ export function AppSidebar(): JSX.Element {
   const { toggleSidebar, state } = useSidebar();
   const isCollapsed = state === 'collapsed';
   const isMobile = useIsMobile();
-  const { data: userProfile, isLoading } = useApi<UserProfile>(['profile']);
+  const user = useAuthStore((state) => state.user);
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -85,19 +85,19 @@ export function AppSidebar(): JSX.Element {
               <Avatar className="h-8 w-8">
                 <AvatarImage src="/placeholder-user.jpg" alt="User avatar" />
                 <AvatarFallback>
-                  {isLoading ? <Skeleton className="h-8 w-8 rounded-full" /> : userProfile ? getInitials(userProfile.name) : 'AU'}
+                  {user ? getInitials(user.name) : <Skeleton className="h-8 w-8 rounded-full" />}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col group-data-[state=collapsed]:hidden min-w-0">
-                {isLoading ? (
+                {!user ? (
                   <div className="space-y-1">
                     <Skeleton className="h-4 w-20" />
                     <Skeleton className="h-3 w-16" />
                   </div>
                 ) : (
                   <>
-                    <span className="text-sm font-medium truncate">{userProfile?.name || 'Admin User'}</span>
-                    <span className="text-xs text-muted-foreground">PRO Member</span>
+                    <span className="text-sm font-medium truncate">{user.name}</span>
+                    <span className="text-xs text-muted-foreground">{user.role === 'admin' ? 'Administrator' : 'User'}</span>
                   </>
                 )}
               </div>

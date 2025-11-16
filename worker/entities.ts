@@ -1,5 +1,5 @@
 import { Entity, IndexedEntity } from "./core-utils";
-import type { Key, Personnel, KeyAssignment, Notification, UserProfile, KeyRequest } from "@shared/types";
+import type { Key, Personnel, KeyAssignment, Notification, UserProfile, KeyRequest, User } from "@shared/types";
 // KEY ENTITY
 export class KeyEntity extends IndexedEntity<Key> {
   static readonly entityName = "key";
@@ -70,4 +70,25 @@ export class UserProfileEntity extends Entity<UserProfile> {
     department: "IT Services",
     appLogoBase64: null,
   };
+}
+// USER ENTITY
+export class UserEntity extends IndexedEntity<User> {
+  static readonly entityName = "user";
+  static readonly indexName = "users";
+  static readonly initialState: User = {
+    id: "",
+    name: "",
+    email: "",
+    password: "", // In a real app, this would be a hash
+    role: "user",
+  };
+  static readonly seedData: ReadonlyArray<User> = [
+    {
+      id: "admin-seed",
+      name: "Admin User",
+      email: "admin@keytrack.app",
+      password: "password",
+      role: "admin",
+    },
+  ];
 }

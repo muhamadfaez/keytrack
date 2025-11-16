@@ -20,34 +20,55 @@ import { AppLogo } from '@/components/layout/AppLogo';
 export function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
+  const signup = useAuthStore((state) => state.signup);
   const enableGoogleAuth = useSettingsStore((state) => state.auth.enableGoogleAuth);
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState('admin@university.edu');
+  const [isSignUp, setIsSignUp] = useState(false);
+  // Form state
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('admin@keytrack.app');
   const [password, setPassword] = useState('password');
-  const performLogin = () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      login();
+    try {
+      await login({ email, password });
       toast.success('Login Successful', {
         description: 'Welcome back! Redirecting you to the dashboard...',
       });
       navigate('/');
-    }, 1000);
-  };
-  const handleCredentialLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email && password) {
-      performLogin();
-    } else {
+    } catch (error) {
       toast.error('Login Failed', {
-        description: 'Please enter your credentials.',
+        description: error instanceof Error ? error.message : 'An unknown error occurred.',
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      await signup({ name, email, password });
+      toast.success('Signup Successful', {
+        description: 'Your account has been created. Redirecting...',
+      });
+      navigate('/');
+    } catch (error) {
+      toast.error('Signup Failed', {
+        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
   const handleGoogleLogin = () => {
-    // This is a simulated login as per requirements.
-    performLogin();
+    toast.info("Google Sign-In is a mock feature for demonstration purposes.");
+    // In a real app, this would trigger the OAuth flow.
+    // For now, we'll just log in the admin user if the credentials match.
+    if (email === 'admin@keytrack.app' && password === 'password') {
+      handleLogin(new Event('submit') as unknown as React.FormEvent);
+    }
   };
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center bg-background">
@@ -61,14 +82,27 @@ export function LoginPage() {
         </h1>
       </div>
       <Card className="w-full max-w-sm mt-8 z-10 animate-fade-in">
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Enter your credentials to access the system.
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleCredentialLogin}>
+        <form onSubmit={isSignUp ? handleSignUp : handleLogin}>
+          <CardHeader>
+            <CardTitle className="text-2xl">{isSignUp ? 'Create Account' : 'Login'}</CardTitle>
+            <CardDescription>
+              {isSignUp ? 'Enter your details to create a new account.' : 'Enter your credentials to access the system.'}
+            </CardDescription>
+          </CardHeader>
           <CardContent className="grid gap-4">
+            {isSignUp && (
+              <div className="grid gap-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  placeholder="John Doe"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={isLoading}
+                />
+              </div>
+            )}
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -94,9 +128,9 @@ export function LoginPage() {
             </div>
             <Button className="w-full mt-2" type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign In
+              {isSignUp ? 'Sign Up' : 'Sign In'}
             </Button>
-            {enableGoogleAuth && (
+            {enableGoogleAuth && !isSignUp && (
               <>
                 <div className="relative my-2">
                   <div className="absolute inset-0 flex items-center">
@@ -119,6 +153,14 @@ export function LoginPage() {
               </>
             )}
           </CardContent>
+          <CardFooter className="text-sm">
+            <p className="text-muted-foreground">
+              {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+              <Button variant="link" type="button" onClick={() => setIsSignUp(!isSignUp)} className="font-semibold">
+                {isSignUp ? 'Sign In' : 'Sign Up'}
+              </Button>
+            </p>
+          </CardFooter>
         </form>
       </Card>
       <p className="text-center text-sm text-muted-foreground mt-8 z-10">
