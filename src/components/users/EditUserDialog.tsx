@@ -20,9 +20,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useApiMutation } from '@/hooks/useApi';
+import { useApi, useApiMutation } from '@/hooks/useApi';
 import { api } from '@/lib/api-client';
-import { User } from '@shared/types';
+import { User, Room } from '@shared/types';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 const userSchema = z.object({
@@ -39,6 +39,7 @@ type EditUserDialogProps = {
   userData: User;
 };
 export function EditUserDialog({ isOpen, onOpenChange, userData }: EditUserDialogProps) {
+  const { data: roomsData, isLoading: isLoadingRooms } = useApi<{ items: Room[] }>(['rooms']);
   const form = useForm<z.infer<typeof userSchema>>({
     resolver: zodResolver(userSchema),
     defaultValues: {
@@ -142,9 +143,21 @@ export function EditUserDialog({ isOpen, onOpenChange, userData }: EditUserDialo
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Room / Area</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Room 205, Building A" {...field} />
-                  </FormControl>
+                  <Select onValueChange={field.onChange} value={field.value || ''}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={isLoadingRooms ? "Loading rooms..." : "Select a room"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {roomsData?.items.map((room) => (
+                        <SelectItem key={room.id} value={room.roomNumber}>
+                          {room.roomNumber}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

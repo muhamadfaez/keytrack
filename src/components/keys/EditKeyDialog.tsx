@@ -27,9 +27,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useApiMutation } from '@/hooks/useApi';
+import { useApi, useApiMutation } from '@/hooks/useApi';
 import { api } from '@/lib/api-client';
-import { Key } from '@shared/types';
+import { Key, Room } from '@shared/types';
 import { toast } from 'sonner';
 const createKeySchema = (issuedCount: number) => z.object({
   keyNumber: z.string().min(1, "Key number is required"),
@@ -46,6 +46,7 @@ type EditKeyDialogProps = {
   keyData: Key;
 };
 export function EditKeyDialog({ isOpen, onOpenChange, keyData }: EditKeyDialogProps) {
+  const { data: roomsData, isLoading: isLoadingRooms } = useApi<{ items: Room[] }>(['rooms']);
   const issuedCount = keyData.totalQuantity - keyData.availableQuantity;
   const keySchema = createKeySchema(issuedCount);
   const form = useForm<z.infer<typeof keySchema>>({
@@ -134,9 +135,20 @@ export function EditKeyDialog({ isOpen, onOpenChange, keyData }: EditKeyDialogPr
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Room / Area</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Room 205, Building A" {...field} />
-                  </FormControl>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={isLoadingRooms ? "Loading rooms..." : "Select a room"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {roomsData?.items.map((room) => (
+                        <SelectItem key={room.id} value={room.roomNumber}>
+                          {room.roomNumber}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
