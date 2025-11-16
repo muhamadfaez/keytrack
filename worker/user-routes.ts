@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { KeyEntity, PersonnelEntity, KeyAssignmentEntity, NotificationEntity } from "./entities";
+import { KeyEntity, PersonnelEntity, KeyAssignmentEntity, NotificationEntity, UserProfileEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
-import { Key, Personnel, KeyAssignment, ReportSummary, KeyStatus, OverdueKeyInfo, Notification } from "@shared/types";
+import { Key, Personnel, KeyAssignment, ReportSummary, KeyStatus, OverdueKeyInfo, Notification, UserProfile } from "@shared/types";
 async function checkAndUpdateOverdueKeys(env: Env) {
   const assignments = await KeyAssignmentEntity.list(env);
   const activeAssignments = assignments.items.filter(a => !a.returnDate);
@@ -129,6 +129,28 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       }
     }
     return ok(c, { success: true });
+  });
+  // --- USER PROFILE ---
+  app.get('/api/profile', async (c) => {
+    const profile = new UserProfileEntity(c.env, 'main');
+    if (!(await profile.exists())) {
+      // Create a default profile if it doesn't exist
+      await profile.save(UserProfileEntity.initialState);
+    }
+    return ok(c, await profile.getState());
+  });
+  app.put('/api/profile', async (c) => {
+    const body = await c.req.json<Partial<UserProfile>>();
+    const profile = new UserProfileEntity(c.env, 'main');
+    if (!(await profile.exists())) {
+      return notFound(c, 'Profile not found');
+    }
+    await profile.patch({
+      name: body.name,
+      email: body.email,
+      department: body.department,
+    });
+    return ok(c, await profile.getState());
   });
   // --- KEYS ---
   app.get('/api/keys', async (c) => {

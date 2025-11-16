@@ -18,9 +18,20 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Settings, User } from "lucide-react";
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
+import { useApi } from '@/hooks/useApi';
+import { UserProfile } from '@shared/types';
+import { Skeleton } from '../ui/skeleton';
+const getInitials = (name: string) => {
+  const names = name.split(' ');
+  if (names.length > 1) {
+    return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
 export function UserNav() {
   const navigate = useNavigate();
   const logout = useAuthStore((state) => state.logout);
+  const { data: userProfile, isLoading } = useApi<UserProfile>(['profile']);
   const handleLogout = () => {
     logout();
     toast.info("You have been logged out.");
@@ -32,17 +43,35 @@ export function UserNav() {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarImage src="/placeholder-user.jpg" alt="User avatar" />
-            <AvatarFallback>AU</AvatarFallback>
+            <AvatarFallback>
+              {isLoading ? <Skeleton className="h-8 w-8 rounded-full" /> : userProfile ? getInitials(userProfile.name) : 'AU'}
+            </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Admin User</p>
-            <p className="text-xs leading-none text-muted-foreground">
-              admin@university.edu
-            </p>
+            {isLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+            ) : userProfile ? (
+              <>
+                <p className="text-sm font-medium leading-none">{userProfile.name}</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {userProfile.email}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-medium leading-none">Admin User</p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  admin@university.edu
+                </p>
+              </>
+            )}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

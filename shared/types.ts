@@ -37,6 +37,12 @@ export type PopulatedAssignment = KeyAssignment & {
 export type KeyWithAssignments = Key & {
   assignments: PopulatedAssignment[];
 };
+// --- User Profile Type ---
+export interface UserProfile {
+  name: string;
+  email: string;
+  department: string;
+}
 // --- Reporting Types ---
 export type StatusDistributionItem = {
   name: KeyStatus;
