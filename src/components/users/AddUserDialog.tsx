@@ -20,9 +20,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useApi, useApiMutation } from '@/hooks/useApi';
+import { useApiMutation } from '@/hooks/useApi';
 import { api } from '@/lib/api-client';
-import { User, Room } from '@shared/types';
+import { User } from '@shared/types';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 const userSchema = z.object({
@@ -30,7 +30,6 @@ const userSchema = z.object({
   email: z.string().email("Invalid email address"),
   department: z.string().min(1, "Department is required"),
   phone: z.string().optional(),
-  roomNumber: z.string().optional(),
   role: z.enum(['user', 'admin']),
 });
 type AddUserDialogProps = {
@@ -38,7 +37,6 @@ type AddUserDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 export function AddUserDialog({ isOpen, onOpenChange }: AddUserDialogProps) {
-  const { data: roomsData, isLoading: isLoadingRooms } = useApi<{ items: Room[] }>(['rooms']);
   const form = useForm<z.infer<typeof userSchema>>({
     resolver: zodResolver(userSchema),
     defaultValues: {
@@ -46,7 +44,6 @@ export function AddUserDialog({ isOpen, onOpenChange }: AddUserDialogProps) {
       email: "",
       department: "",
       phone: "",
-      roomNumber: "",
       role: "user",
     },
   });
@@ -55,11 +52,7 @@ export function AddUserDialog({ isOpen, onOpenChange }: AddUserDialogProps) {
     [['users']]
   );
   const onSubmit = (values: z.infer<typeof userSchema>) => {
-    const payload = {
-      ...values,
-      roomNumber: values.roomNumber === 'none' ? '' : values.roomNumber,
-    };
-    createUserMutation.mutate(payload, {
+    createUserMutation.mutate(values, {
       onSuccess: (data) => {
         toast.success(`User "${data.name}" created successfully!`);
         form.reset();
@@ -135,36 +128,11 @@ export function AddUserDialog({ isOpen, onOpenChange }: AddUserDialogProps) {
             />
             <FormField
               control={form.control}
-              name="roomNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Room / Area</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={isLoadingRooms ? "Loading rooms..." : "Select a room"} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {roomsData?.items.map((room) => (
-                        <SelectItem key={room.id} value={room.roomNumber}>
-                          {room.roomNumber}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="role"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Role</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a role" />

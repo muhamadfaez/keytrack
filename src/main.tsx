@@ -13,7 +13,7 @@ import { RouteErrorBoundary } from '@/components/RouteErrorBoundary';
 import '@/index.css'
 import { HomePage } from '@/pages/HomePage'
 import { KeyInventoryPage } from '@/pages/KeyInventoryPage';
-import { PersonnelPage } from '@/pages/PersonnelPage';
+import { UsersPage } from '@/pages/UsersPage';
 import { ReportsPage } from '@/pages/ReportsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { Toaster } from '@/components/ui/sonner';
@@ -42,8 +42,8 @@ const router = createBrowserRouter([
         element: <KeyInventoryPage />,
       },
       {
-        path: "personnel",
-        element: <PersonnelPage />,
+        path: "users",
+        element: <UsersPage />,
       },
       {
         path: "requests",

@@ -25,7 +25,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import { Key, Personnel, KeyAssignment } from "@shared/types";
+import { Key, User, KeyAssignment } from "@shared/types";
 import { cn } from "@/lib/utils";
 import { useApi, useApiMutation } from '@/hooks/useApi';
 import { api } from '@/lib/api-client';
@@ -41,14 +41,14 @@ export function IssueKeyDialog({ isOpen, onOpenChange, keyData, onSuccess }: Iss
   const [issueDate, setIssueDate] = useState<Date | undefined>(new Date());
   const [dueDate, setDueDate] = useState<Date | undefined>();
   const [assignmentType, setAssignmentType] = useState<"event" | "personal">("event");
-  const { data: personnelData, isLoading: isLoadingPersonnel } = useApi<{ items: Personnel[] }>(['personnel']);
+  const { data: usersData, isLoading: isLoadingUsers } = useApi<{ items: User[] }>(['users']);
   const issueKeyMutation = useApiMutation<KeyAssignment, Partial<KeyAssignment>>(
     (newAssignment) => api('/api/assignments', { method: 'POST', body: JSON.stringify(newAssignment) }),
     [['keys'], ['assignments', 'recent'], ['stats'], ['reports', 'summary']]
   );
   const handleSubmit = () => {
     if (!personnelId) {
-      toast.error("Please select personnel.");
+      toast.error("Please select a user.");
       return;
     }
     if (!issueDate) {
@@ -86,22 +86,22 @@ export function IssueKeyDialog({ isOpen, onOpenChange, keyData, onSuccess }: Iss
         <DialogHeader>
           <DialogTitle>Issue Key: {keyData.keyNumber}</DialogTitle>
           <DialogDescription>
-            Assign this key to a person and set a due date for its return.
+            Assign this key to a user and set a due date for its return.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="personnel" className="text-right">
-              Personnel
+              User
             </Label>
             <Select onValueChange={setPersonnelId} value={personnelId}>
               <SelectTrigger className="col-span-3">
-                <SelectValue placeholder={isLoadingPersonnel ? "Loading..." : "Select a person"} />
+                <SelectValue placeholder={isLoadingUsers ? "Loading..." : "Select a user"} />
               </SelectTrigger>
               <SelectContent>
-                {personnelData?.items.map((person) => (
-                  <SelectItem key={person.id} value={person.id}>
-                    {person.name} ({person.department})
+                {usersData?.items.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name} ({user.department})
                   </SelectItem>
                 ))}
               </SelectContent>

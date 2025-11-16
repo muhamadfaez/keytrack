@@ -41,7 +41,7 @@ export function RejectRequestDialog({ isOpen, onOpenChange, request }: RejectReq
         <AlertDialogHeader>
           <AlertDialogTitle>Are you sure you want to reject this request?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action will mark the request from <span className="font-semibold">{request.personnel.name}</span> for "{request.requestedKeyInfo}" as rejected. This cannot be undone.
+            This action will mark the request from <span className="font-semibold">{request.user.name}</span> for "{request.requestedKeyInfo}" as rejected. This cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

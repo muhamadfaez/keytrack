@@ -6,12 +6,13 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User, PopulatedAssignment } from "@shared/types";
 import { useApi } from '@/hooks/useApi';
 import { format } from 'date-fns';
-import { Mail, Phone, Building, History, DoorOpen } from 'lucide-react';
+import { Mail, Phone, Building, History, KeyRound } from 'lucide-react';
 import { EmptyState } from '../layout/EmptyState';
 type UserKeyHistorySheetProps = {
   isOpen: boolean;
@@ -95,7 +96,6 @@ export function UserKeyHistorySheet({ isOpen, onOpenChange, userData }: UserKeyH
                 <DetailItem icon={<Mail size={16} />} label="Email" value={userData.email} />
                 <DetailItem icon={<Building size={16} />} label="Department" value={userData.department} />
                 <DetailItem icon={<Phone size={16} />} label="Phone" value={userData.phone || 'Not provided'} />
-                <DetailItem icon={<DoorOpen size={16} />} label="Room/Area" value={userData.roomNumber || 'Not assigned'} />
               </div>
             </div>
             <Separator />

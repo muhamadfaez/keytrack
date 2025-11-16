@@ -12,26 +12,19 @@ export interface Key {
   status: KeyStatus;
   currentHolderId?: string;
 }
-export interface Personnel {
-  id: string;
-  name: string;
-  email: string;
-  department: string;
-  phone: string;
-}
 export interface KeyAssignment {
   id: string;
   keyId: string;
-  personnelId: string;
+  personnelId: string; // This ID now refers to a User
   issueDate: string; // ISO 8601 string
   assignmentType: "personal" | "event";
   dueDate?: string;   // ISO 8601 string
   returnDate?: string; // ISO 8601 string
 }
-// Represents an assignment populated with the full key and personnel objects.
-export type PopulatedAssignment = KeyAssignment & {
+// Represents an assignment populated with the full key and user objects.
+export type PopulatedAssignment = Omit<KeyAssignment, 'personnelId'> & {
   key: Key;
-  personnel: Personnel;
+  user: User;
 };
 // Represents a key with its full assignment history.
 export type KeyWithAssignments = Key & {
@@ -41,7 +34,7 @@ export type KeyWithAssignments = Key & {
 export type KeyRequestStatus = "Pending" | "Approved" | "Rejected";
 export interface KeyRequest {
   id: string;
-  personnelId: string;
+  personnelId: string; // This ID now refers to a User
   requestedKeyInfo: string; // e.g., "Key for Room 101" or "Master Key"
   assignmentType: "personal" | "event";
   issueDate: string; // ISO 8601 string
@@ -49,8 +42,8 @@ export interface KeyRequest {
   status: KeyRequestStatus;
   createdAt: string; // ISO 8601 string
 }
-export type PopulatedKeyRequest = KeyRequest & {
-  personnel: Personnel;
+export type PopulatedKeyRequest = Omit<KeyRequest, 'personnelId'> & {
+  user: User;
 };
 // --- User Profile Type ---
 export interface UserProfile {
@@ -64,6 +57,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  department: string;
+  phone: string;
   role: 'admin' | 'user';
   password?: string; // Only on backend
 }
@@ -80,7 +75,7 @@ export type DepartmentActivityItem = {
 export type OverdueKeyInfo = {
   keyNumber: string;
   roomNumber: string;
-  personName: string;
+  userName: string;
   department: string;
   dueDate: string;
 };

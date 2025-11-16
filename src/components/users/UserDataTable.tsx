@@ -46,12 +46,10 @@ export function UserDataTable({ searchTerm }: UserDataTableProps) {
     let sortableItems = usersData?.items ? [...usersData.items] : [];
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
-        const aVal = a[sortConfig.key] || '';
-        const bVal = b[sortConfig.key] || '';
-        if (aVal < bVal) {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
           return sortConfig.direction === 'ascending' ? -1 : 1;
         }
-        if (aVal > bVal) {
+        if (a[sortConfig.key] > b[sortConfig.key]) {
           return sortConfig.direction === 'ascending' ? 1 : -1;
         }
         return 0;
@@ -62,10 +60,9 @@ export function UserDataTable({ searchTerm }: UserDataTableProps) {
   const filteredUsers = useMemo(() => {
     if (!sortedUsers) return [];
     return sortedUsers.filter(user =>
-      (user.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.email ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.department ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.roomNumber ?? '').toLowerCase().includes(searchTerm.toLowerCase())
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.department.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [sortedUsers, searchTerm]);
   const requestSort = (key: SortableKey) => {
@@ -101,14 +98,14 @@ export function UserDataTable({ searchTerm }: UserDataTableProps) {
     if (isLoading) {
       return Array.from({ length: 5 }).map((_, i) => (
         <TableRow key={i}>
-          <TableCell colSpan={6}><Skeleton className="h-8 w-full" /></TableCell>
+          <TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell>
         </TableRow>
       ));
     }
     if (error) {
       return (
         <TableRow>
-          <TableCell colSpan={6} className="text-center text-destructive">
+          <TableCell colSpan={5} className="text-center text-destructive">
             Error loading users: {error.message}
           </TableCell>
         </TableRow>
@@ -117,7 +114,7 @@ export function UserDataTable({ searchTerm }: UserDataTableProps) {
     if (filteredUsers.length === 0) {
       return (
         <TableRow>
-          <TableCell colSpan={6}>
+          <TableCell colSpan={5}>
             <EmptyState
               icon={<Inbox className="h-12 w-12" />}
               title="No Users Found"
@@ -132,7 +129,6 @@ export function UserDataTable({ searchTerm }: UserDataTableProps) {
         <TableCell className="font-medium">{user.name}</TableCell>
         <TableCell>{user.email}</TableCell>
         <TableCell>{user.department}</TableCell>
-        <TableCell>{user.roomNumber || 'N/A'}</TableCell>
         <TableCell><Badge variant={user.role === 'admin' ? 'default' : 'secondary'} className="capitalize">{user.role}</Badge></TableCell>
         <TableCell>
           <DropdownMenu>
@@ -186,11 +182,6 @@ export function UserDataTable({ searchTerm }: UserDataTableProps) {
                   <TableHead>
                     <Button variant="ghost" size="sm" onClick={() => requestSort('department')}>
                       Department {getSortIcon('department')}
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" size="sm" onClick={() => requestSort('roomNumber')}>
-                      Room/Area {getSortIcon('roomNumber')}
                     </Button>
                   </TableHead>
                   <TableHead>

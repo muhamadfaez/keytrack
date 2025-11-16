@@ -34,7 +34,7 @@ const StatusBadge = ({ status }: { status: KeyRequestStatus }) => {
   };
   return <Badge variant={variantMap[status]}>{status}</Badge>;
 };
-type SortableKey = keyof PopulatedKeyRequest | 'personnel.name';
+type SortableKey = keyof PopulatedKeyRequest | 'user.name';
 type SortDirection = 'ascending' | 'descending';
 export function KeyRequestDataTable() {
   const { data: requests, isLoading, error } = useApi<PopulatedKeyRequest[]>(['requests']);
@@ -49,7 +49,7 @@ export function KeyRequestDataTable() {
     if (sortConfig !== null) {
       sortableItems.sort((a, b) => {
         const getVal = (item: PopulatedKeyRequest, key: SortableKey) => {
-          if (key === 'personnel.name') return item.personnel.name;
+          if (key === 'user.name') return item.user.name;
           return item[key as keyof PopulatedKeyRequest];
         };
         const aVal = getVal(a, sortConfig.key);
@@ -106,7 +106,7 @@ export function KeyRequestDataTable() {
     }
     return sortedRequests.map((request) => (
       <TableRow key={request.id}>
-        <TableCell className="font-medium">{request.personnel.name}</TableCell>
+        <TableCell className="font-medium">{request.user.name}</TableCell>
         <TableCell>{request.requestedKeyInfo}</TableCell>
         <TableCell><StatusBadge status={request.status} /></TableCell>
         <TableCell>{format(new Date(request.issueDate), "MMM dd, yyyy")}</TableCell>
@@ -150,8 +150,8 @@ export function KeyRequestDataTable() {
               <TableHeader>
                 <TableRow>
                   <TableHead>
-                    <Button variant="ghost" size="sm" onClick={() => requestSort('personnel.name')}>
-                      Requester {getSortIcon('personnel.name')}
+                    <Button variant="ghost" size="sm" onClick={() => requestSort('user.name')}>
+                      Requester {getSortIcon('user.name')}
                     </Button>
                   </TableHead>
                   <TableHead>

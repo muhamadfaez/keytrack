@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { KeyEntity, PersonnelEntity, KeyAssignmentEntity, NotificationEntity, UserProfileEntity, KeyRequestEntity, UserEntity } from "./entities";
+import { KeyEntity, KeyAssignmentEntity, NotificationEntity, UserProfileEntity, KeyRequestEntity, UserEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
-import { Key, Personnel, KeyAssignment, ReportSummary, KeyStatus, OverdueKeyInfo, Notification, UserProfile, KeyRequest, User } from "@shared/types";
+import { Key, ReportSummary, KeyStatus, OverdueKeyInfo, Notification, UserProfile, KeyRequest, User } from "@shared/types";
 async function checkAndUpdateOverdueKeys(env: Env) {
   const assignments = await KeyAssignmentEntity.list(env);
   const activeAssignments = assignments.items.filter(a => !a.returnDate);
@@ -48,6 +48,8 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       name: body.name,
       email: body.email,
       password: body.password, // In a real app, hash this password
+      department: body.department || 'Unassigned',
+      phone: body.phone || '',
       role: 'user',
     };
     const createdUser = await UserEntity.create(c.env, newUser);
@@ -87,8 +89,8 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const populatedAssignments = await Promise.all(
       assignments.map(async (assignment) => {
         const key = await new KeyEntity(c.env, assignment.keyId).getState();
-        const personnel = await new PersonnelEntity(c.env, assignment.personnelId).getState();
-        return { ...assignment, key, personnel };
+        const user = await new UserEntity(c.env, assignment.personnelId).getState();
+        return { ...assignment, key, user };
       })
     );
     return ok(c, populatedAssignments);
@@ -97,9 +99,9 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.get('/api/reports/summary', async (c) => {
     await checkAndUpdateOverdueKeys(c.env);
     const allKeys = (await KeyEntity.list(c.env)).items;
-    const allPersonnel = (await PersonnelEntity.list(c.env)).items;
+    const allUsers = (await UserEntity.list(c.env)).items;
     const allAssignments = (await KeyAssignmentEntity.list(c.env)).items;
-    const personnelMap = new Map(allPersonnel.map(p => [p.id, p]));
+    const userMap = new Map(allUsers.map(p => [p.id, p]));
     // 1. Status Distribution
     const statusCounts: Record<KeyStatus, number> = { Available: 0, Issued: 0, Overdue: 0, Lost: 0 };
     allKeys.forEach(key => { statusCounts[key.status]++; });
@@ -108,9 +110,9 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const departmentCounts: Record<string, number> = {};
     const activeAssignments = allAssignments.filter(a => !a.returnDate);
     activeAssignments.forEach(assignment => {
-      const person = personnelMap.get(assignment.personnelId);
-      if (person) {
-        departmentCounts[person.department] = (departmentCounts[person.department] || 0) + 1;
+      const user = userMap.get(assignment.personnelId);
+      if (user) {
+        departmentCounts[user.department] = (departmentCounts[user.department] || 0) + 1;
       }
     });
     const departmentActivity = Object.entries(departmentCounts).map(([name, keys]) => ({ name, keys }));
@@ -120,12 +122,12 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       .map(async (key): Promise<OverdueKeyInfo | null> => {
         const assignment = allAssignments.find(a => a.keyId === key.id && !a.returnDate);
         if (assignment && assignment.dueDate) {
-          const person = personnelMap.get(assignment.personnelId);
+          const user = userMap.get(assignment.personnelId);
           return {
             keyNumber: key.keyNumber,
             roomNumber: key.roomNumber,
-            personName: person?.name || 'Unknown',
-            department: person?.department || 'Unknown',
+            userName: user?.name || 'Unknown',
+            department: user?.department || 'Unknown',
             dueDate: assignment.dueDate,
           };
         }
@@ -142,11 +144,14 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
   // --- SETTINGS ---
   app.post('/api/settings/reset', async (c) => {
     const allKeys = await KeyEntity.list(c.env);
-    const allPersonnel = await PersonnelEntity.list(c.env);
+    const allUsers = await UserEntity.list(c.env);
     const allAssignments = await KeyAssignmentEntity.list(c.env);
     const allNotifications = await NotificationEntity.list(c.env);
     await KeyEntity.deleteMany(c.env, allKeys.items.map(k => k.id));
-    await PersonnelEntity.deleteMany(c.env, allPersonnel.items.map(p => p.id));
+    // Keep seed users, delete others
+    const seedUserIds = UserEntity.seedData.map(u => u.id);
+    const usersToDelete = allUsers.items.filter(u => !seedUserIds.includes(u.id));
+    await UserEntity.deleteMany(c.env, usersToDelete.map(p => p.id));
     await KeyAssignmentEntity.deleteMany(c.env, allAssignments.items.map(a => a.id));
     await NotificationEntity.deleteMany(c.env, allNotifications.items.map(n => n.id));
     // Also reset profile logo
@@ -282,55 +287,57 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const keyAssignments = allAssignments.items.filter(a => a.keyId === keyId);
     const populated = await Promise.all(
       keyAssignments.map(async (assignment) => {
-        const personnel = await new PersonnelEntity(c.env, assignment.personnelId).getState();
+        const user = await new UserEntity(c.env, assignment.personnelId).getState();
         const key = await new KeyEntity(c.env, assignment.keyId).getState();
-        return { ...assignment, personnel, key };
+        return { ...assignment, user, key };
       })
     );
     return ok(c, populated.sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime()));
   });
-  // --- PERSONNEL ---
-  app.get('/api/personnel', async (c) => ok(c, await PersonnelEntity.list(c.env)));
-  app.post('/api/personnel', async (c) => {
-    const body = await c.req.json<Partial<Personnel>>();
+  // --- USERS ---
+  app.get('/api/users', async (c) => ok(c, await UserEntity.list(c.env)));
+  app.post('/api/users', async (c) => {
+    const body = await c.req.json<Partial<User>>();
     if (!isStr(body.name) || !isStr(body.department) || !isStr(body.email)) return bad(c, 'name, department, and email are required');
-    const newPerson: Personnel = {
+    const newUser: User = {
       id: crypto.randomUUID(),
       name: body.name,
       department: body.department,
       email: body.email,
       phone: body.phone || '',
+      role: body.role || 'user',
     };
-    return ok(c, await PersonnelEntity.create(c.env, newPerson));
+    return ok(c, await UserEntity.create(c.env, newUser));
   });
-  app.put('/api/personnel/:id', async (c) => {
+  app.put('/api/users/:id', async (c) => {
     const id = c.req.param('id');
-    const body = await c.req.json<Partial<Personnel>>();
-    const person = new PersonnelEntity(c.env, id);
-    if (!(await person.exists())) return notFound(c, 'Personnel not found');
-    await person.patch({
+    const body = await c.req.json<Partial<User>>();
+    const user = new UserEntity(c.env, id);
+    if (!(await user.exists())) return notFound(c, 'User not found');
+    await user.patch({
       name: body.name,
       department: body.department,
       email: body.email,
       phone: body.phone,
+      role: body.role,
     });
-    return ok(c, await person.getState());
+    return ok(c, await user.getState());
   });
-  app.delete('/api/personnel/:id', async (c) => {
+  app.delete('/api/users/:id', async (c) => {
     const id = c.req.param('id');
-    const existed = await PersonnelEntity.delete(c.env, id);
-    if (!existed) return notFound(c, 'Personnel not found');
+    const existed = await UserEntity.delete(c.env, id);
+    if (!existed) return notFound(c, 'User not found');
     return ok(c, { id });
   });
-  app.get('/api/personnel/:id/keys', async (c) => {
-    const personnelId = c.req.param('id');
+  app.get('/api/users/:id/keys', async (c) => {
+    const userId = c.req.param('id');
     const allAssignments = await KeyAssignmentEntity.list(c.env);
-    const personAssignments = allAssignments.items.filter(a => a.personnelId === personnelId);
+    const userAssignments = allAssignments.items.filter(a => a.personnelId === userId);
     const populated = await Promise.all(
-      personAssignments.map(async (assignment) => {
+      userAssignments.map(async (assignment) => {
         const key = await new KeyEntity(c.env, assignment.keyId).getState();
-        const personnel = await new PersonnelEntity(c.env, assignment.personnelId).getState();
-        return { ...assignment, key, personnel };
+        const user = await new UserEntity(c.env, assignment.personnelId).getState();
+        return { ...assignment, key, user };
       })
     );
     return ok(c, populated);
@@ -350,7 +357,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       return bad(c, 'Key is not available for assignment');
     }
     const keyState = await key.getState();
-    const person = await new PersonnelEntity(c.env, body.personnelId).getState();
+    const user = await new UserEntity(c.env, body.personnelId).getState();
     const newAssignment: KeyAssignment = {
       id: crypto.randomUUID(),
       keyId: body.keyId,
@@ -363,7 +370,7 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const createdAssignment = await KeyAssignmentEntity.create(c.env, newAssignment);
     const newNotification: Notification = {
       id: crypto.randomUUID(),
-      message: `Key "${keyState.keyNumber}" issued to ${person.name}.`,
+      message: `Key "${keyState.keyNumber}" issued to ${user.name}.`,
       timestamp: new Date().toISOString(),
       read: false,
     };
@@ -376,8 +383,8 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const requests = requestsPage.items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     const populatedRequests = await Promise.all(
       requests.map(async (request) => {
-        const personnel = await new PersonnelEntity(c.env, request.personnelId).getState();
-        return { ...request, personnel };
+        const user = await new UserEntity(c.env, request.personnelId).getState();
+        return { ...request, user };
       })
     );
     return ok(c, populatedRequests);
@@ -402,10 +409,10 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
       createdAt: new Date().toISOString(),
     };
     const createdRequest = await KeyRequestEntity.create(c.env, newRequest);
-    const person = await new PersonnelEntity(c.env, body.personnelId).getState();
+    const user = await new UserEntity(c.env, body.personnelId).getState();
     const newNotification: Notification = {
       id: crypto.randomUUID(),
-      message: `New key request submitted by ${person.name}.`,
+      message: `New key request submitted by ${user.name}.`,
       timestamp: new Date().toISOString(),
       read: false,
     };
@@ -439,10 +446,10 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     // Update request status
     await requestEntity.patch({ status: 'Approved' });
     // Create notification
-    const person = await new PersonnelEntity(c.env, request.personnelId).getState();
+    const user = await new UserEntity(c.env, request.personnelId).getState();
     const newNotification: Notification = {
       id: crypto.randomUUID(),
-      message: `Key request for ${person.name} was approved. Key "${key.keyNumber}" issued.`,
+      message: `Key request for ${user.name} was approved. Key "${key.keyNumber}" issued.`,
       timestamp: new Date().toISOString(),
       read: false,
     };
@@ -456,10 +463,10 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const request = await requestEntity.getState();
     if (request.status !== 'Pending') return bad(c, 'Request is not pending');
     await requestEntity.patch({ status: 'Rejected' });
-    const person = await new PersonnelEntity(c.env, request.personnelId).getState();
+    const user = await new UserEntity(c.env, request.personnelId).getState();
     const newNotification: Notification = {
       id: crypto.randomUUID(),
-      message: `Key request for ${person.name} was rejected.`,
+      message: `Key request for ${user.name} was rejected.`,
       timestamp: new Date().toISOString(),
       read: false,
     };

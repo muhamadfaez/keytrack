@@ -1,5 +1,5 @@
 import { Entity, IndexedEntity } from "./core-utils";
-import type { Key, Personnel, KeyAssignment, Notification, UserProfile, KeyRequest, User } from "@shared/types";
+import type { Key, KeyAssignment, Notification, UserProfile, KeyRequest, User } from "@shared/types";
 // KEY ENTITY
 export class KeyEntity extends IndexedEntity<Key> {
   static readonly entityName = "key";
@@ -10,18 +10,6 @@ export class KeyEntity extends IndexedEntity<Key> {
     keyType: "Single",
     roomNumber: "",
     status: "Available",
-  };
-}
-// PERSONNEL ENTITY
-export class PersonnelEntity extends IndexedEntity<Personnel> {
-  static readonly entityName = "personnel";
-  static readonly indexName = "personnel";
-  static readonly initialState: Personnel = {
-    id: "",
-    name: "",
-    email: "",
-    department: "",
-    phone: "",
   };
 }
 // KEY ASSIGNMENT ENTITY
@@ -79,6 +67,8 @@ export class UserEntity extends IndexedEntity<User> {
     id: "",
     name: "",
     email: "",
+    department: "",
+    phone: "",
     password: "", // In a real app, this would be a hash
     role: "user",
   };
@@ -87,6 +77,8 @@ export class UserEntity extends IndexedEntity<User> {
       id: "admin-seed",
       name: "Admin User",
       email: "admin@keytrack.app",
+      department: "System Administration",
+      phone: "123-456-7890",
       password: "password",
       role: "admin",
     },
@@ -94,6 +86,8 @@ export class UserEntity extends IndexedEntity<User> {
       id: "iium-admin-seed",
       name: "Muhamad Faez",
       email: "muhamadfaez@iium.edu.my",
+      department: "Kulliyyah of ICT",
+      phone: "012-345-6789",
       password: "faez123",
       role: "admin",
     },

@@ -153,7 +153,7 @@ export function ReportsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Key Number</TableHead>
-                    <TableHead>Assigned To</TableHead>
+                    <TableHead>User</TableHead>
                     <TableHead>Department</TableHead>
                     <TableHead>Due Date</TableHead>
                   </TableRow>
@@ -163,7 +163,7 @@ export function ReportsPage() {
                     data.overdueKeys.map((item, index) => (
                       <TableRow key={index}>
                         <TableCell className="font-medium">{item.keyNumber}</TableCell>
-                        <TableCell>{item.personName}</TableCell>
+                        <TableCell>{item.userName}</TableCell>
                         <TableCell>{item.department}</TableCell>
                         <TableCell className="text-destructive font-semibold">
                           {format(new Date(item.dueDate), "MMM dd, yyyy")}

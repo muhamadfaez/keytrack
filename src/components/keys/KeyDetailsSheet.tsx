@@ -61,7 +61,7 @@ export function KeyDetailsSheet({ isOpen, onOpenChange, keyData }: KeyDetailsShe
         {history.map((item) => (
           <div key={item.id} className="relative mb-6">
             <div className="absolute -left-[30.5px] top-1.5 h-5 w-5 rounded-full bg-primary" />
-            <p className="font-semibold">{item.personnel.name}</p>
+            <p className="font-semibold">{item.user.name}</p>
             <p className="text-sm text-muted-foreground capitalize flex items-center">
               <CaseSensitive className="h-3 w-3 mr-1.5" /> Type: {item.assignmentType}
             </p>

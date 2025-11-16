@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { KeyRound, Users, AlertTriangle, CheckCircle } from "lucide-react";
-import { KeyAssignment, Personnel, Key } from "@shared/types";
+import { Key, PopulatedAssignment } from "@shared/types";
 import { format } from "date-fns";
 import { useApi } from "@/hooks/useApi";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,10 +14,6 @@ type DashboardStats = {
   keysIssued: number;
   keysAvailable: number;
   overdueKeys: number;
-};
-type PopulatedAssignment = KeyAssignment & {
-  key: Key;
-  personnel: Personnel;
 };
 export function HomePage() {
   const { data: stats, isLoading: isLoadingStats } = useApi<DashboardStats>(['stats']);
@@ -78,7 +74,7 @@ export function HomePage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Key Number</TableHead>
-                      <TableHead>Personnel</TableHead>
+                      <TableHead>User</TableHead>
                       <TableHead>Department</TableHead>
                       <TableHead>Due Date</TableHead>
                       <TableHead>Status</TableHead>
@@ -95,8 +91,8 @@ export function HomePage() {
                       recentAssignments.map((assignment) => (
                         <TableRow key={assignment.id}>
                           <TableCell className="font-medium">{assignment.key.keyNumber}</TableCell>
-                          <TableCell>{assignment.personnel.name}</TableCell>
-                          <TableCell>{assignment.personnel.department}</TableCell>
+                          <TableCell>{assignment.user.name}</TableCell>
+                          <TableCell>{assignment.user.department}</TableCell>
                           <TableCell>
                             {assignment.dueDate ? format(new Date(assignment.dueDate), "MMM dd, yyyy") : 'N/A'}
                           </TableCell>

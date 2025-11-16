@@ -64,7 +64,7 @@ export function ApproveRequestDialog({ isOpen, onOpenChange, request }: ApproveR
         <DialogHeader>
           <DialogTitle>Approve Key Request</DialogTitle>
           <DialogDescription>
-            Select an available key to fulfill the request for <span className="font-semibold">{request.personnel.name}</span>.
+            Select an available key to fulfill the request for <span className="font-semibold">{request.user.name}</span>.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">

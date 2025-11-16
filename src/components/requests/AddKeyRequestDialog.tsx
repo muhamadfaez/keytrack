@@ -36,13 +36,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import { KeyRequest, Personnel } from "@shared/types";
+import { KeyRequest, User } from "@shared/types";
 import { cn } from "@/lib/utils";
 import { useApi, useApiMutation } from '@/hooks/useApi';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
 const requestSchema = z.object({
-  personnelId: z.string().min(1, "Personnel is required"),
+  personnelId: z.string().min(1, "User is required"),
   requestedKeyInfo: z.string().min(1, "Key information is required"),
   assignmentType: z.enum(["event", "personal"]),
   issueDate: z.date(),
@@ -68,7 +68,7 @@ export function AddKeyRequestDialog({ isOpen, onOpenChange }: AddKeyRequestDialo
       issueDate: new Date(),
     },
   });
-  const { data: personnelData, isLoading: isLoadingPersonnel } = useApi<{ items: Personnel[] }>(['personnel']);
+  const { data: usersData, isLoading: isLoadingUsers } = useApi<{ items: User[] }>(['users']);
   const createRequestMutation = useApiMutation<KeyRequest, Partial<KeyRequest>>(
     (newRequest) => api('/api/requests', { method: 'POST', body: JSON.stringify(newRequest) }),
     [['requests'], ['notifications']]
@@ -96,7 +96,7 @@ export function AddKeyRequestDialog({ isOpen, onOpenChange }: AddKeyRequestDialo
         <DialogHeader>
           <DialogTitle>Submit Key Request</DialogTitle>
           <DialogDescription>
-            Fill out the form to request a key on behalf of personnel.
+            Fill out the form to request a key on behalf of a user.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -106,17 +106,17 @@ export function AddKeyRequestDialog({ isOpen, onOpenChange }: AddKeyRequestDialo
               name="personnelId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Personnel</FormLabel>
+                  <FormLabel>User</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder={isLoadingPersonnel ? "Loading..." : "Select a person"} />
+                        <SelectValue placeholder={isLoadingUsers ? "Loading..." : "Select a user"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {personnelData?.items.map((person) => (
-                        <SelectItem key={person.id} value={person.id}>
-                          {person.name}
+                      {usersData?.items.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

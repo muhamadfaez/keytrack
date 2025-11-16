@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
@@ -11,7 +12,7 @@ export function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const user = useAuthStore((state) => state.user);
   return (
-    <>
+    <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="py-8 md:py-10 lg:py-12">
           <PageHeader
@@ -37,6 +38,6 @@ export function UsersPage() {
         </div>
       </div>
       <AddUserDialog isOpen={isAddDialogOpen} onOpenChange={setAddDialogOpen} />
-    </>
+    </AppLayout>
   );
 }
