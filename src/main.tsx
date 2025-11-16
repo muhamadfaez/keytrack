@@ -20,6 +20,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { LoginPage } from './pages/LoginPage';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { ProfilePage } from './pages/ProfilePage';
+import { KeyRequestsPage } from './pages/KeyRequestsPage';
 const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
@@ -43,6 +44,10 @@ const router = createBrowserRouter([
       {
         path: "personnel",
         element: <PersonnelPage />,
+      },
+      {
+        path: "requests",
+        element: <KeyRequestsPage />,
       },
       {
         path: "reports",

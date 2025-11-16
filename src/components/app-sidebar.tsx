@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, KeyRound, Users, BarChart3, Settings, PanelLeft, PanelRight, Zap } from "lucide-react";
+import { Home, KeyRound, Users, BarChart3, Settings, PanelLeft, PanelRight, Zap, ClipboardCheck } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -24,6 +24,7 @@ const navItems = [
   { href: "/", label: "Dashboard", icon: Home },
   { href: "/keys", label: "Key Inventory", icon: KeyRound },
   { href: "/personnel", label: "Personnel", icon: Users },
+  { href: "/requests", label: "Key Requests", icon: ClipboardCheck },
   { href: "/reports", label: "Reports", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

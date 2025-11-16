@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -36,17 +37,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
-import { KeyRequest, User } from "@shared/types";
+import { KeyRequest, Personnel } from "@shared/types";
 import { cn } from "@/lib/utils";
 import { useApi, useApiMutation } from '@/hooks/useApi';
 import { api } from '@/lib/api-client';
 import { toast } from 'sonner';
-import { useAuthStore } from '@/stores/authStore';
 const requestSchema = z.object({
-  personnelId: z.string().min(1, "User is required"),
+  personnelId: z.string().min(1, "Personnel is required"),
   requestedKeyInfo: z.string().min(1, "Key information is required"),
   assignmentType: z.enum(["event", "personal"]),
-  issueDate: z.date(),
+  issueDate: z.date({ required_error: "Issue date is required" }),
   dueDate: z.date().optional(),
 }).refine(data => {
   if (data.assignmentType === 'event') {
@@ -62,17 +62,14 @@ type AddKeyRequestDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 export function AddKeyRequestDialog({ isOpen, onOpenChange }: AddKeyRequestDialogProps) {
-  const user = useAuthStore((state) => state.user);
-  const isUserView = user?.role !== 'admin';
   const form = useForm<z.infer<typeof requestSchema>>({
     resolver: zodResolver(requestSchema),
     defaultValues: {
-      personnelId: isUserView ? user?.id : undefined,
       assignmentType: "event",
       issueDate: new Date(),
     },
   });
-  const { data: usersData, isLoading: isLoadingUsers } = useApi<{ items: User[] }>(['users'], { enabled: !isUserView });
+  const { data: personnelData, isLoading: isLoadingPersonnel } = useApi<{ items: Personnel[] }>(['personnel']);
   const createRequestMutation = useApiMutation<KeyRequest, Partial<KeyRequest>>(
     (newRequest) => api('/api/requests', { method: 'POST', body: JSON.stringify(newRequest) }),
     [['requests'], ['notifications']]
@@ -80,7 +77,6 @@ export function AddKeyRequestDialog({ isOpen, onOpenChange }: AddKeyRequestDialo
   const onSubmit = (values: z.infer<typeof requestSchema>) => {
     const submissionData = {
       ...values,
-      personnelId: isUserView ? user!.id : values.personnelId,
       issueDate: values.issueDate.toISOString(),
       dueDate: values.dueDate?.toISOString(),
     };
@@ -101,39 +97,35 @@ export function AddKeyRequestDialog({ isOpen, onOpenChange }: AddKeyRequestDialo
         <DialogHeader>
           <DialogTitle>Submit Key Request</DialogTitle>
           <DialogDescription>
-            {isUserView
-              ? "Fill out the form to request a key for yourself."
-              : "Fill out the form to request a key on behalf of a user."}
+            Fill out the form to request a key on behalf of personnel.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-            {!isUserView && (
-              <FormField
-                control={form.control}
-                name="personnelId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>User</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={isLoadingUsers ? "Loading..." : "Select a user"} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {usersData?.items.map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+            <FormField
+              control={form.control}
+              name="personnelId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Personnel</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={isLoadingPersonnel ? "Loading..." : "Select a person"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {personnelData?.items.map((person) => (
+                        <SelectItem key={person.id} value={person.id}>
+                          {person.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="requestedKeyInfo"

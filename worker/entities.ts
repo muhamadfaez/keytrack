@@ -1,5 +1,5 @@
 import { Entity, IndexedEntity } from "./core-utils";
-import type { Key, Personnel, KeyAssignment, Notification, UserProfile } from "@shared/types";
+import type { Key, Personnel, KeyAssignment, Notification, UserProfile, KeyRequest } from "@shared/types";
 // KEY ENTITY
 export class KeyEntity extends IndexedEntity<Key> {
   static readonly entityName = "key";
@@ -34,6 +34,20 @@ export class KeyAssignmentEntity extends IndexedEntity<KeyAssignment> {
     personnelId: "",
     issueDate: "",
     assignmentType: "event",
+  };
+}
+// KEY REQUEST ENTITY
+export class KeyRequestEntity extends IndexedEntity<KeyRequest> {
+  static readonly entityName = "keyRequest";
+  static readonly indexName = "keyRequests";
+  static readonly initialState: KeyRequest = {
+    id: "",
+    personnelId: "",
+    requestedKeyInfo: "",
+    assignmentType: "event",
+    issueDate: "",
+    status: "Pending",
+    createdAt: "",
   };
 }
 // NOTIFICATION ENTITY

@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import type { Env } from './core-utils';
-import { KeyEntity, PersonnelEntity, KeyAssignmentEntity, NotificationEntity, UserProfileEntity } from "./entities";
+import { KeyEntity, PersonnelEntity, KeyAssignmentEntity, NotificationEntity, UserProfileEntity, KeyRequestEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
-import { Key, Personnel, KeyAssignment, ReportSummary, KeyStatus, OverdueKeyInfo, Notification, UserProfile } from "@shared/types";
+import { Key, Personnel, KeyAssignment, ReportSummary, KeyStatus, OverdueKeyInfo, Notification, UserProfile, KeyRequest } from "@shared/types";
 async function checkAndUpdateOverdueKeys(env: Env) {
   const assignments = await KeyAssignmentEntity.list(env);
   const activeAssignments = assignments.items.filter(a => !a.returnDate);
@@ -329,5 +329,47 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     };
     await NotificationEntity.create(c.env, newNotification);
     return ok(c, createdAssignment);
+  });
+  // --- KEY REQUESTS ---
+  app.get('/api/requests', async (c) => {
+    const requestsPage = await KeyRequestEntity.list(c.env);
+    const requests = requestsPage.items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const populatedRequests = await Promise.all(
+      requests.map(async (request) => {
+        const personnel = await new PersonnelEntity(c.env, request.personnelId).getState();
+        return { ...request, personnel };
+      })
+    );
+    return ok(c, populatedRequests);
+  });
+  app.post('/api/requests', async (c) => {
+    const body = await c.req.json<Partial<KeyRequest>>();
+    if (!isStr(body.personnelId) || !isStr(body.requestedKeyInfo) || !isStr(body.issueDate)) {
+      return bad(c, 'personnelId, requestedKeyInfo, and issueDate are required');
+    }
+    const assignmentType = body.assignmentType || 'event';
+    if (assignmentType === 'event' && !isStr(body.dueDate)) {
+      return bad(c, 'dueDate is required for event requests');
+    }
+    const newRequest: KeyRequest = {
+      id: crypto.randomUUID(),
+      personnelId: body.personnelId,
+      requestedKeyInfo: body.requestedKeyInfo,
+      assignmentType: assignmentType,
+      issueDate: body.issueDate,
+      dueDate: body.dueDate,
+      status: 'Pending',
+      createdAt: new Date().toISOString(),
+    };
+    const createdRequest = await KeyRequestEntity.create(c.env, newRequest);
+    const person = await new PersonnelEntity(c.env, body.personnelId).getState();
+    const newNotification: Notification = {
+      id: crypto.randomUUID(),
+      message: `New key request submitted by ${person.name}.`,
+      timestamp: new Date().toISOString(),
+      read: false,
+    };
+    await NotificationEntity.create(c.env, newNotification);
+    return ok(c, createdRequest);
   });
 }

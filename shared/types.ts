@@ -37,6 +37,21 @@ export type PopulatedAssignment = KeyAssignment & {
 export type KeyWithAssignments = Key & {
   assignments: PopulatedAssignment[];
 };
+// --- Key Request Types ---
+export type KeyRequestStatus = "Pending" | "Approved" | "Rejected";
+export interface KeyRequest {
+  id: string;
+  personnelId: string;
+  requestedKeyInfo: string; // e.g., "Key for Room 101" or "Master Key"
+  assignmentType: "personal" | "event";
+  issueDate: string; // ISO 8601 string
+  dueDate?: string;   // ISO 8601 string, optional for personal
+  status: KeyRequestStatus;
+  createdAt: string; // ISO 8601 string
+}
+export type PopulatedKeyRequest = KeyRequest & {
+  personnel: Personnel;
+};
 // --- User Profile Type ---
 export interface UserProfile {
   name: string;
