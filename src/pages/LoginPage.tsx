@@ -175,7 +175,7 @@ export function LoginPage() {
         </form>
       </Card>
       <p className="text-center text-sm text-muted-foreground mt-8 z-10">
-        Built with ❤️ at Cloudflare
+        Develop by fzapp.my
       </p>
     </div>
   );
