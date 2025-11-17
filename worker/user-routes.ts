@@ -392,17 +392,9 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
     const body = await c.req.json<Partial<User>>();
     const user = new UserEntity(c.env, id);
     if (!(await user.exists())) return notFound(c, 'User not found');
-    // Keep existing password if not provided
-    const existingUser = await user.getState();
-    await user.patch({
-      name: body.name,
-      department: body.department,
-      email: body.email,
-      phone: body.phone,
-      role: body.role,
-      roomNumber: body.roomNumber,
-      password: existingUser.password
-    });
+    // Ensure password is not updated through this endpoint
+    delete body.password;
+    await user.patch(body);
     const updatedUser = await user.getState();
     const { password: _, ...userResponse } = updatedUser;
     return ok(c, userResponse);
@@ -427,7 +419,8 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
     if (userState.password !== currentPassword) {
       return bad(c, 'Incorrect current password');
     }
-    await user.patch({ password: newPassword });
+    userState.password = newPassword;
+    await user.save(userState);
     return ok(c, { message: 'Password updated successfully' });
   });
   app.get('/api/users/:id/keys', async (c) => {
