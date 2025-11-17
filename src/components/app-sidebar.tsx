@@ -39,18 +39,15 @@ export function AppSidebar(): JSX.Element {
       <Sidebar.Content>
         <Sidebar.Menu>
           {filteredNavItems.map((item) => (
-            <Sidebar.MenuItem
-              key={item.href}
-              tooltip={item.label}
-              to={item.href}
-              end={item.href === '/'}
-            >
-              {({ isActive }) => (
-                <Sidebar.MenuButton isActive={isActive}>
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.label}</span>
-                </Sidebar.MenuButton>
-              )}
+            <Sidebar.MenuItem key={item.href} tooltip={item.label}>
+              <NavLink to={item.href} end={item.href === '/'}>
+                {({ isActive }) => (
+                  <Sidebar.MenuButton isActive={isActive}>
+                    <item.icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </Sidebar.MenuButton>
+                )}
+              </NavLink>
             </Sidebar.MenuItem>
           ))}
         </Sidebar.Menu>
