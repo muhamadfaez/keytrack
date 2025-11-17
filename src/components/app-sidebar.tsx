@@ -29,9 +29,9 @@ export function AppSidebar(): JSX.Element {
   return (
     <Sidebar.Root>
       <Sidebar.Header>
-        <AppLogo className="h-8 w-8 text-primary" />
+        <AppLogo className="h-10 w-10 text-primary" />
         {!isCollapsed && (
-          <span className="ml-3 text-lg font-semibold font-display tracking-tight">
+          <span className="ml-3 text-xl font-semibold font-display tracking-tight">
             KeyTrack
           </span>
         )}
