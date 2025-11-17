@@ -241,7 +241,8 @@ export function userRoutes(app: Hono<{Bindings: Env;}>) {
     await profile.patch({
       name: body.name,
       email: body.email,
-      department: body.department
+      department: body.department,
+      appName: body.appName,
     });
     return ok(c, await profile.getState());
   });

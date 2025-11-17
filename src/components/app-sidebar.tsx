@@ -4,6 +4,9 @@ import { Home, KeyRound, Users, BarChart3, Settings, ClipboardCheck, KeySquare, 
 import { Sidebar, useSidebar } from "@/components/ui/sidebar";
 import { AppLogo } from "./layout/AppLogo";
 import { useAuthStore } from "@/stores/authStore";
+import { useApi } from "@/hooks/useApi";
+import { UserProfile } from "@shared/types";
+import { Skeleton } from "./ui/skeleton";
 const navItems = [
   { href: "/", label: "Dashboard", icon: Home, adminOnly: false },
   { href: "/keys", label: "Key Inventory", icon: KeyRound, adminOnly: true },
@@ -19,6 +22,7 @@ export function AppSidebar(): JSX.Element {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
   const { isCollapsed } = useSidebar();
+  const { data: userProfile, isLoading } = useApi<UserProfile>(['profile']);
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly && user?.role !== 'admin') return false;
     // Business Rule: "My Keys" is a user-centric view and is not relevant for admins
@@ -32,7 +36,7 @@ export function AppSidebar(): JSX.Element {
         <AppLogo className="h-10 w-10 text-primary" />
         {!isCollapsed && (
           <span className="ml-3 text-xl font-semibold font-display tracking-tight">
-            KeyTrack
+            {isLoading ? <Skeleton className="h-6 w-24" /> : (userProfile?.appName || 'KeyTrack')}
           </span>
         )}
       </Sidebar.Header>

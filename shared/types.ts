@@ -52,6 +52,7 @@ export interface UserProfile {
   email: string;
   department: string;
   appLogoBase64?: string | null;
+  appName?: string;
 }
 // --- User Authentication Types ---
 export interface User {

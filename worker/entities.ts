@@ -58,6 +58,7 @@ export class UserProfileEntity extends Entity<UserProfile> {
     email: "admin@university.edu",
     department: "IT Services",
     appLogoBase64: null,
+    appName: "KeyTrack",
   };
 }
 // USER ENTITY

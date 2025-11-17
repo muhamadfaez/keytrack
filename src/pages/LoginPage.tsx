@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,17 +17,28 @@ import { toast } from 'sonner';
 import { GoogleIcon } from '@/components/icons/GoogleIcon';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { AppLogo } from '@/components/layout/AppLogo';
+import { useApi } from '@/hooks/useApi';
+import { UserProfile } from '@shared/types';
+import { Skeleton } from '@/components/ui/skeleton';
 export function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
   const signup = useAuthStore((state) => state.signup);
   const enableGoogleAuth = useSettingsStore((state) => state.auth.enableGoogleAuth);
+  const { data: userProfile, isLoading: isLoadingProfile } = useApi<UserProfile>(['profile']);
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   // Form state
   const [name, setName] = useState('');
   const [email, setEmail] = useState('admin@keytrack.app');
   const [password, setPassword] = useState('password');
+  useEffect(() => {
+    if (userProfile?.appName) {
+      document.title = `${userProfile.appName} - Login`;
+    } else {
+      document.title = 'KeyTrack - Login';
+    }
+  }, [userProfile]);
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -78,7 +89,7 @@ export function LoginPage() {
           <AppLogo className="h-8 w-8 text-primary-foreground" />
         </div>
         <h1 className="text-3xl font-bold font-display tracking-tight">
-          KeyTrack
+          {isLoadingProfile ? <Skeleton className="h-8 w-32" /> : (userProfile?.appName || 'KeyTrack')}
         </h1>
       </div>
       <Card className="w-full max-w-sm mt-8 z-10 animate-fade-in">

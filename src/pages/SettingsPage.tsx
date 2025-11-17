@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { LogoSettings } from '@/components/settings/LogoSettings';
 import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
 import { useAuthStore } from '@/stores/authStore';
+import { AppNameSettings } from '@/components/settings/AppNameSettings';
 export function SettingsPage() {
   const [isResetDialogOpen, setResetDialogOpen] = useState(false);
   const enableGoogleAuth = useSettingsStore((state) => state.auth.enableGoogleAuth);
@@ -52,6 +53,7 @@ export function SettingsPage() {
           />
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             <AppearanceSettings />
+            <AppNameSettings />
             <LogoSettings />
             <NotificationSettings />
             <Card className="transition-colors hover:bg-muted/50">
