@@ -115,7 +115,7 @@ const Footer = ({ className, children }: { className?: string; children: React.R
 const Menu = ({ className, children }: { className?: string; children: React.ReactNode }) => {
   const { isCollapsed } = useSidebar();
   return (
-    <nav className={cn("flex flex-col", isCollapsed ? "p-2" : "p-4", className)}>
+    <nav className={cn("flex flex-col", isCollapsed ? "p-3" : "p-4", className)}>
       <ul className="flex flex-col gap-1">{children}</ul>
     </nav>
   );
