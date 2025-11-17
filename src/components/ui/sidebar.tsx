@@ -194,10 +194,10 @@ const MenuButton = ({ children, isActive }: { children: React.ReactNode, isActiv
     }
   });
   return (
-    <>
+    <div className="flex items-center">
       {icon}
       {!isCollapsed && <span className={cn("ml-3 truncate", isActive && "font-semibold")}>{text}</span>}
-    </>
+    </div>
   );
 };
 const Trigger = ({ className, ...props }: React.ComponentProps<typeof Button>) => {
